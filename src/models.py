@@ -58,28 +58,36 @@ class Guardian:
         )
 
     @torch.no_grad()
-    def predict(self, texts: list) -> list:
+    def predict(self, texts: list, batch_size: int = 128) -> list:
         """Return predicted class labels (0 or 1) for a list of texts."""
         self.model.eval()
-        enc = self.tokenizer(
-            texts, truncation=True, padding="max_length",
-            max_length=self.max_length, return_tensors="pt",
-        ).to(self.device)
-        logits = self.model(**enc).logits
-        preds = torch.argmax(logits, dim=-1)
-        return preds.cpu().tolist()
+        all_preds = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            enc = self.tokenizer(
+                batch, truncation=True, padding="max_length",
+                max_length=self.max_length, return_tensors="pt",
+            ).to(self.device)
+            logits = self.model(**enc).logits
+            preds = torch.argmax(logits, dim=-1)
+            all_preds.extend(preds.cpu().tolist())
+        return all_preds
 
     @torch.no_grad()
-    def predict_proba(self, texts: list) -> list:
+    def predict_proba(self, texts: list, batch_size: int = 128) -> list:
         """Return P(hate) for each text."""
         self.model.eval()
-        enc = self.tokenizer(
-            texts, truncation=True, padding="max_length",
-            max_length=self.max_length, return_tensors="pt",
-        ).to(self.device)
-        logits = self.model(**enc).logits
-        probs = torch.softmax(logits, dim=-1)[:, 1]  # P(label=1)
-        return probs.cpu().tolist()
+        all_probs = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            enc = self.tokenizer(
+                batch, truncation=True, padding="max_length",
+                max_length=self.max_length, return_tensors="pt",
+            ).to(self.device)
+            logits = self.model(**enc).logits
+            probs = torch.softmax(logits, dim=-1)[:, 1]
+            all_probs.extend(probs.cpu().tolist())
+        return all_probs
 
     def save(self, path: str):
         """Save model and tokenizer."""
