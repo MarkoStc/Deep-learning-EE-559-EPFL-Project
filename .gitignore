@@ -16,8 +16,7 @@ env/
 # Data (downloaded at runtime)
 data/
 
-# Outputs (results, checkpoints, plots)
-outputs/
+
 
 # IDE
 .vscode/

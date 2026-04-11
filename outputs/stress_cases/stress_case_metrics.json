@@ -1,0 +1,11 @@
+{
+  "overall_asr": 0.9578270192994996,
+  "asr_by_action": {
+    "leetspeak": 0.9578270192994996
+  },
+  "action_distribution": {
+    "leetspeak": 1.0
+  },
+  "total_cases": 2798,
+  "successful_attacks": 2680
+}
