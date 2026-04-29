@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from src.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
 from src.data_loading import load_and_split
-from src.models import Guardian, EvaderNetwork
+from src.models import Guardian, EvaderNetwork, RandomNetwork
 from src.evader_env import EvaderBanditEnv
 from src.preprocess import ACTION_NAMES, NUM_ACTIONS
 
@@ -39,8 +39,15 @@ def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
 
     # ── Setup ────────────────────────────────────────────────
     env = EvaderBanditEnv(hate_train, guardian, cfg)
-    policy = EvaderNetwork(ecfg["state_dim"], NUM_ACTIONS, ecfg["hidden_dim"]).to(device)
-    optimizer = torch.optim.Adam(policy.parameters(), lr=ecfg["learning_rate"])
+    if cfg.get("random_evader", False):
+        policy = RandomNetwork(NUM_ACTIONS)
+        print("[INFO] Using Random Evader baseline")
+    else:
+        policy = EvaderNetwork(NUM_ACTIONS).to(device)
+        print("[INFO] Using learned EvaderNetwork")
+
+    
+    optimizer = None if cfg.get("random_evader", False) else torch.optim.Adam(policy.parameters(), lr=ecfg["learning_rate"])
 
     # Running baseline for variance reduction
     baseline = 0.0
@@ -67,19 +74,20 @@ def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
         rewards = torch.tensor(result["rewards"], dtype=torch.float32).to(device)
 
         # 5. REINFORCE update
-        advantage = rewards - baseline
-        policy_loss = -(log_probs * advantage).mean()
-        entropy_loss = -entropies.mean()
-        loss = policy_loss + entropy_coeff * entropy_loss
+        if optimizer is not None :
+            advantage = rewards - baseline
+            policy_loss = -(log_probs * advantage).mean()
+            entropy_loss = -entropies.mean()
+            loss = policy_loss + entropy_coeff * entropy_loss
 
-        optimizer.zero_grad()
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
-        optimizer.step()
+            optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
+            optimizer.step()
+            baseline = baseline_decay * baseline + (1 - baseline_decay) * rewards.mean().item()
 
-        # Update baseline
-        baseline = baseline_decay * baseline + (1 - baseline_decay) * rewards.mean().item()
-
+      
+        
         # Log
         if (episode + 1) % 50 == 0 or episode == 0:
             action_dist = env.get_action_distribution_stats(actions)
@@ -87,7 +95,7 @@ def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
                 "episode": episode + 1,
                 "attack_success_rate": result["attack_success"],
                 "mean_reward": rewards.mean().item(),
-                "policy_loss": policy_loss.item(),
+                "policy_loss": policy_loss.item() if optimizer is not None else 0.0,
                 "entropy": entropies.mean().item(),
                 **{f"action_{k}": v for k, v in action_dist.items()},
             })
@@ -99,8 +107,11 @@ def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
 
     # ── Save policy ──────────────────────────────────────────
     policy_path = run_dir / "evader_policy.pt"
-    torch.save(policy.state_dict(), policy_path)
-    print(f"[INFO] Evader policy saved to {policy_path}")
+    
+    
+    if not cfg.get("random_evader", False):
+        torch.save(policy.state_dict(), policy_path)
+        print(f"[INFO] Evader policy saved to {policy_path}")
 
     # ── Save history ─────────────────────────────────────────
     df = pd.DataFrame(history)
@@ -148,13 +159,15 @@ def main():
     parser.add_argument("--config", type=str, default="configs/default.yaml")
     parser.add_argument("--guardian_path", type=str, required=True,
                         help="Path to trained Guardian checkpoint")
+    parser.add_argument("--random", action="store_true", 
+                    help="Use random baseline instead of learned policy")
     args = parser.parse_args()
 
     cfg = load_config(args.config)
     set_seed(cfg["seed"])
     run_dir = create_run_dir(cfg["output_dir"])
     save_config_snapshot(cfg, run_dir)
-
+    cfg["random_evader"] = args.random  
     train_evader(cfg, args.guardian_path, run_dir)
 
 

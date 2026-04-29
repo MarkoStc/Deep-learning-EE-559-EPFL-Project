@@ -1,0 +1,21 @@
+{
+  "overall_asr": 0.9571122230164403,
+  "asr_by_action": {
+    "emoji": 1.0,
+    "homoglyph": 0.9936708860759493,
+    "leetspeak": 0.9505197505197506,
+    "synonym": 1.0,
+    "typo": 1.0,
+    "whitespace": 1.0
+  },
+  "action_distribution": {
+    "leetspeak": 0.859542530378842,
+    "homoglyph": 0.056468906361686916,
+    "synonym": 0.05146533238027162,
+    "typo": 0.02215868477483917,
+    "whitespace": 0.010007147962830594,
+    "emoji": 0.00035739814152966406
+  },
+  "total_cases": 2798,
+  "successful_attacks": 2678
+}

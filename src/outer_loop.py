@@ -267,7 +267,7 @@ def main():
 
         # Load the policy back
         ecfg = cfg["evader"]
-        policy_net = EvaderNetwork(ecfg["state_dim"], NUM_ACTIONS, ecfg["hidden_dim"]).to(device)
+        policy_net = EvaderNetwork(NUM_ACTIONS).to(device)
         policy_path = round_dir / "evader_policy.pt"
         policy_net.load_state_dict(torch.load(policy_path, map_location=device))
         policy_net.eval()

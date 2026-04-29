@@ -1,0 +1,50 @@
+checkpoint_dir: outputs/checkpoints
+cluster:
+  gpu: 1
+  image: registry.rcp.epfl.ch/ee559/environment-with-packages:latest
+  project_path: /home/mstojano/red_queen
+  pvc_claim: home
+  pvc_path: /home/mstojano
+  uid: 309057
+data_dir: data
+dataset:
+  max_samples: 50000
+  name: civil_comments
+  test_size: 0.15
+  toxicity_threshold: 0.5
+  val_size: 0.15
+evader:
+  baseline_decay: 0.99
+  batch_size: 64
+  entropy_coeff: 0.01
+  episodes: 2000
+  gamma: 1.0
+  hidden_dim: 64
+  learning_rate: 0.001
+  num_actions: 7
+  state_dim: 8
+eval:
+  mask_char: "\u2588"
+  max_display_examples: 10
+  sanitize_logs: true
+guardian:
+  batch_size: 32
+  epochs: 3
+  learning_rate: 2.0e-05
+  max_length: 128
+  model_name: distilbert-base-uncased
+  num_labels: 2
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+output_dir: outputs
+perturbation:
+  emoji_insert_count: 1
+  homoglyph_prob: 0.3
+  leet_prob: 0.4
+  synonym_max_replacements: 2
+  typo_prob: 0.3
+robust:
+  augmentation_ratio: 0.5
+  epochs: 2
+  learning_rate: 1.0e-05
+seed: 42

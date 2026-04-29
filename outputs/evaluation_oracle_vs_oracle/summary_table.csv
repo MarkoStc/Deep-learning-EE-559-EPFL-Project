@@ -1,0 +1,5 @@
+Condition,Macro-F1,Hate-F1,Hate-Prec,Hate-Rec,Accuracy
+Baseline Clean,0.8098,0.6486,0.6820,0.6183,0.9464
+Baseline Stress,0.0004,0.0007,1.0000,0.0004,0.0004
+Robust Clean,0.8080,0.6446,0.6963,0.6000,0.9471
+Robust Stress,0.4978,0.9957,1.0000,0.9914,0.9914

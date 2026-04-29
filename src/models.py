@@ -103,15 +103,14 @@ class Guardian:
         self.tokenizer = DistilBertTokenizerFast.from_pretrained(path)
         print(f"[INFO] Guardian loaded from {path}")
 
-
 class EvaderNetwork(nn.Module):
     """
     Small MLP policy network for the Evader.
-    Input: text feature vector (state_dim)
+    Input: text feature vector (state_dim = 8, cf. extract_text_features)
     Output: action logits (num_actions)
     """
 
-    def __init__(self, state_dim: int, num_actions: int, hidden_dim: int = 64):
+    def __init__(self, num_actions: int, state_dim: int = 8, hidden_dim: int = 64):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(state_dim, hidden_dim),
@@ -122,16 +121,43 @@ class EvaderNetwork(nn.Module):
         )
 
     def forward(self, state: torch.Tensor) -> torch.Tensor:
-        """Return action logits."""
         return self.net(state)
 
     def get_action_and_log_prob(self, state: torch.Tensor):
-        """
-        Sample an action from the policy and return (action, log_prob).
-        """
         logits = self.forward(state)
         dist = torch.distributions.Categorical(logits=logits)
         action = dist.sample()
         log_prob = dist.log_prob(action)
         entropy = dist.entropy()
         return action, log_prob, entropy
+
+class RandomNetwork(nn.Module):
+    """
+    RANDOM
+    """
+    """python -m src.evader_policy --config configs/default.yaml \
+    --guardian_path outputs/run_xxx/guardian_best \
+    --random""" #to run the training of this model
+
+    def __init__(self, num_actions: int):
+        super().__init__()
+        self.num_actions = num_actions
+
+    def get_action_and_log_prob(self, state: torch.Tensor):
+        """Same signature as EvaderNetwork.get_action_and_log_prob."""
+        # Uniform logits → uniform distribution
+        batch_size = state.shape[0]
+        logits = torch.ones(batch_size, self.num_actions)
+        dist = torch.distributions.Categorical(logits=logits)
+        action = dist.sample()
+        log_prob = dist.log_prob(action)
+        entropy = dist.entropy()
+        return action, log_prob, entropy
+
+    def forward(self, state: torch.Tensor) -> torch.Tensor:
+        """Return uniform logits regardless of state."""
+        batch_size = state.shape[0]
+        return torch.ones(batch_size, self.num_actions)
+    
+
+
