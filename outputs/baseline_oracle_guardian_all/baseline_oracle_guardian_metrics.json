@@ -1,0 +1,438 @@
+{
+  "summary": [
+    {
+      "guardian": "initial",
+      "checkpoint_path": "outputs/run_029/guardian_best",
+      "clean_macro_f1": 0.8097943482614384,
+      "clean_hate_f1": 0.6486013986013986,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 229,
+      "n_base_caught_noop": 371,
+      "raw_noop_asr": 0.38166666666666665,
+      "raw_oracle_asr": 0.9883333333333333,
+      "raw_oracle_success_count": 593,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.9811320754716981,
+      "effective_oracle_success_count": 364,
+      "added_oracle_over_noop_pp": 0.6066666666666667
+    },
+    {
+      "guardian": "random",
+      "checkpoint_path": "outputs/baseline_outer_loop_random/round_05/guardian_robust",
+      "clean_macro_f1": 0.7959450621321125,
+      "clean_hate_f1": 0.6218181818181818,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 258,
+      "n_base_caught_noop": 342,
+      "raw_noop_asr": 0.43,
+      "raw_oracle_asr": 0.5066666666666667,
+      "raw_oracle_success_count": 304,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.13450292397660818,
+      "effective_oracle_success_count": 46,
+      "added_oracle_over_noop_pp": 0.07666666666666672
+    },
+    {
+      "guardian": "greedy",
+      "checkpoint_path": "outputs/baseline_outer_loop_greedy/round_05/guardian_robust",
+      "clean_macro_f1": 0.7955228550665996,
+      "clean_hate_f1": 0.6219081272084805,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 248,
+      "n_base_caught_noop": 352,
+      "raw_noop_asr": 0.41333333333333333,
+      "raw_oracle_asr": 0.5066666666666667,
+      "raw_oracle_success_count": 304,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.1590909090909091,
+      "effective_oracle_success_count": 56,
+      "added_oracle_over_noop_pp": 0.09333333333333338
+    },
+    {
+      "guardian": "heuristic",
+      "checkpoint_path": "outputs/baseline_outer_loop_heuristic/round_05/guardian_robust",
+      "clean_macro_f1": 0.8002650267599836,
+      "clean_hate_f1": 0.6303571428571428,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 247,
+      "n_base_caught_noop": 353,
+      "raw_noop_asr": 0.4116666666666667,
+      "raw_oracle_asr": 0.5466666666666666,
+      "raw_oracle_success_count": 328,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.22946175637393768,
+      "effective_oracle_success_count": 81,
+      "added_oracle_over_noop_pp": 0.13499999999999995
+    },
+    {
+      "guardian": "oracle",
+      "checkpoint_path": "outputs/baseline_outer_loop_oracle/round_05/guardian_robust",
+      "clean_macro_f1": 0.7977899293688767,
+      "clean_hate_f1": 0.6263157894736842,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 243,
+      "n_base_caught_noop": 357,
+      "raw_noop_asr": 0.405,
+      "raw_oracle_asr": 0.45666666666666667,
+      "raw_oracle_success_count": 274,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.08683473389355742,
+      "effective_oracle_success_count": 31,
+      "added_oracle_over_noop_pp": 0.05166666666666664
+    },
+    {
+      "guardian": "rl",
+      "checkpoint_path": "outputs/baseline_outer_loop_rl/round_05/guardian_robust",
+      "clean_macro_f1": 0.7946947104065296,
+      "clean_hate_f1": 0.6208695652173913,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 243,
+      "n_base_caught_noop": 357,
+      "raw_noop_asr": 0.405,
+      "raw_oracle_asr": 0.5,
+      "raw_oracle_success_count": 300,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.15966386554621848,
+      "effective_oracle_success_count": 57,
+      "added_oracle_over_noop_pp": 0.09499999999999997
+    }
+  ],
+  "per_action": [
+    {
+      "guardian": "initial",
+      "action": "noop",
+      "raw_asr": 0.38166666666666665,
+      "raw_success_count": 229,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "initial",
+      "action": "typo",
+      "raw_asr": 0.5483333333333333,
+      "raw_success_count": 329,
+      "effective_asr_conditioned_on_noop_caught": 0.29649595687331537,
+      "effective_success_count": 110
+    },
+    {
+      "guardian": "initial",
+      "action": "leetspeak",
+      "raw_asr": 0.9716666666666667,
+      "raw_success_count": 583,
+      "effective_asr_conditioned_on_noop_caught": 0.954177897574124,
+      "effective_success_count": 354
+    },
+    {
+      "guardian": "initial",
+      "action": "whitespace",
+      "raw_asr": 0.38166666666666665,
+      "raw_success_count": 229,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "initial",
+      "action": "homoglyph",
+      "raw_asr": 0.8533333333333334,
+      "raw_success_count": 512,
+      "effective_asr_conditioned_on_noop_caught": 0.7654986522911051,
+      "effective_success_count": 284
+    },
+    {
+      "guardian": "initial",
+      "action": "synonym",
+      "raw_asr": 0.455,
+      "raw_success_count": 273,
+      "effective_asr_conditioned_on_noop_caught": 0.1347708894878706,
+      "effective_success_count": 50
+    },
+    {
+      "guardian": "initial",
+      "action": "emoji",
+      "raw_asr": 0.4,
+      "raw_success_count": 240,
+      "effective_asr_conditioned_on_noop_caught": 0.03234501347708895,
+      "effective_success_count": 12
+    },
+    {
+      "guardian": "random",
+      "action": "noop",
+      "raw_asr": 0.43,
+      "raw_success_count": 258,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "random",
+      "action": "typo",
+      "raw_asr": 0.09666666666666666,
+      "raw_success_count": 58,
+      "effective_asr_conditioned_on_noop_caught": 0.038011695906432746,
+      "effective_success_count": 13
+    },
+    {
+      "guardian": "random",
+      "action": "leetspeak",
+      "raw_asr": 0.008333333333333333,
+      "raw_success_count": 5,
+      "effective_asr_conditioned_on_noop_caught": 0.005847953216374269,
+      "effective_success_count": 2
+    },
+    {
+      "guardian": "random",
+      "action": "whitespace",
+      "raw_asr": 0.43,
+      "raw_success_count": 258,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "random",
+      "action": "homoglyph",
+      "raw_asr": 0.01,
+      "raw_success_count": 6,
+      "effective_asr_conditioned_on_noop_caught": 0.005847953216374269,
+      "effective_success_count": 2
+    },
+    {
+      "guardian": "random",
+      "action": "synonym",
+      "raw_asr": 0.46,
+      "raw_success_count": 276,
+      "effective_asr_conditioned_on_noop_caught": 0.10526315789473684,
+      "effective_success_count": 36
+    },
+    {
+      "guardian": "random",
+      "action": "emoji",
+      "raw_asr": 0.2733333333333333,
+      "raw_success_count": 164,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "greedy",
+      "action": "noop",
+      "raw_asr": 0.41333333333333333,
+      "raw_success_count": 248,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "greedy",
+      "action": "typo",
+      "raw_asr": 0.056666666666666664,
+      "raw_success_count": 34,
+      "effective_asr_conditioned_on_noop_caught": 0.022727272727272728,
+      "effective_success_count": 8
+    },
+    {
+      "guardian": "greedy",
+      "action": "leetspeak",
+      "raw_asr": 0.0,
+      "raw_success_count": 0,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "greedy",
+      "action": "whitespace",
+      "raw_asr": 0.41333333333333333,
+      "raw_success_count": 248,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "greedy",
+      "action": "homoglyph",
+      "raw_asr": 0.025,
+      "raw_success_count": 15,
+      "effective_asr_conditioned_on_noop_caught": 0.02556818181818182,
+      "effective_success_count": 9
+    },
+    {
+      "guardian": "greedy",
+      "action": "synonym",
+      "raw_asr": 0.43166666666666664,
+      "raw_success_count": 259,
+      "effective_asr_conditioned_on_noop_caught": 0.10795454545454546,
+      "effective_success_count": 38
+    },
+    {
+      "guardian": "greedy",
+      "action": "emoji",
+      "raw_asr": 0.43,
+      "raw_success_count": 258,
+      "effective_asr_conditioned_on_noop_caught": 0.04261363636363636,
+      "effective_success_count": 15
+    },
+    {
+      "guardian": "heuristic",
+      "action": "noop",
+      "raw_asr": 0.4116666666666667,
+      "raw_success_count": 247,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "heuristic",
+      "action": "typo",
+      "raw_asr": 0.13166666666666665,
+      "raw_success_count": 79,
+      "effective_asr_conditioned_on_noop_caught": 0.059490084985835696,
+      "effective_success_count": 21
+    },
+    {
+      "guardian": "heuristic",
+      "action": "leetspeak",
+      "raw_asr": 0.0016666666666666668,
+      "raw_success_count": 1,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "heuristic",
+      "action": "whitespace",
+      "raw_asr": 0.4116666666666667,
+      "raw_success_count": 247,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "heuristic",
+      "action": "homoglyph",
+      "raw_asr": 0.015,
+      "raw_success_count": 9,
+      "effective_asr_conditioned_on_noop_caught": 0.014164305949008499,
+      "effective_success_count": 5
+    },
+    {
+      "guardian": "heuristic",
+      "action": "synonym",
+      "raw_asr": 0.49333333333333335,
+      "raw_success_count": 296,
+      "effective_asr_conditioned_on_noop_caught": 0.15864022662889518,
+      "effective_success_count": 56
+    },
+    {
+      "guardian": "heuristic",
+      "action": "emoji",
+      "raw_asr": 0.42833333333333334,
+      "raw_success_count": 257,
+      "effective_asr_conditioned_on_noop_caught": 0.04815864022662889,
+      "effective_success_count": 17
+    },
+    {
+      "guardian": "oracle",
+      "action": "noop",
+      "raw_asr": 0.405,
+      "raw_success_count": 243,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "oracle",
+      "action": "typo",
+      "raw_asr": 0.04833333333333333,
+      "raw_success_count": 29,
+      "effective_asr_conditioned_on_noop_caught": 0.01680672268907563,
+      "effective_success_count": 6
+    },
+    {
+      "guardian": "oracle",
+      "action": "leetspeak",
+      "raw_asr": 0.0016666666666666668,
+      "raw_success_count": 1,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "oracle",
+      "action": "whitespace",
+      "raw_asr": 0.405,
+      "raw_success_count": 243,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "oracle",
+      "action": "homoglyph",
+      "raw_asr": 0.0016666666666666668,
+      "raw_success_count": 1,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "oracle",
+      "action": "synonym",
+      "raw_asr": 0.41333333333333333,
+      "raw_success_count": 248,
+      "effective_asr_conditioned_on_noop_caught": 0.07282913165266107,
+      "effective_success_count": 26
+    },
+    {
+      "guardian": "oracle",
+      "action": "emoji",
+      "raw_asr": 0.25,
+      "raw_success_count": 150,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl",
+      "action": "noop",
+      "raw_asr": 0.405,
+      "raw_success_count": 243,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl",
+      "action": "typo",
+      "raw_asr": 0.07666666666666666,
+      "raw_success_count": 46,
+      "effective_asr_conditioned_on_noop_caught": 0.01680672268907563,
+      "effective_success_count": 6
+    },
+    {
+      "guardian": "rl",
+      "action": "leetspeak",
+      "raw_asr": 0.0016666666666666668,
+      "raw_success_count": 1,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl",
+      "action": "whitespace",
+      "raw_asr": 0.405,
+      "raw_success_count": 243,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl",
+      "action": "homoglyph",
+      "raw_asr": 0.0033333333333333335,
+      "raw_success_count": 2,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl",
+      "action": "synonym",
+      "raw_asr": 0.4533333333333333,
+      "raw_success_count": 272,
+      "effective_asr_conditioned_on_noop_caught": 0.14285714285714285,
+      "effective_success_count": 51
+    },
+    {
+      "guardian": "rl",
+      "action": "emoji",
+      "raw_asr": 0.3433333333333333,
+      "raw_success_count": 206,
+      "effective_asr_conditioned_on_noop_caught": 0.008403361344537815,
+      "effective_success_count": 3
+    }
+  ]
+}

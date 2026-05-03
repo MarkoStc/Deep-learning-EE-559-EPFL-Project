@@ -1,0 +1,150 @@
+{
+  "summary": [
+    {
+      "guardian": "initial",
+      "checkpoint_path": "outputs/run_029/guardian_best",
+      "clean_macro_f1": 0.8097943482614384,
+      "clean_hate_f1": 0.6486013986013986,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 229,
+      "n_base_caught_noop": 371,
+      "raw_noop_asr": 0.38166666666666665,
+      "raw_oracle_asr": 0.9883333333333333,
+      "raw_oracle_success_count": 593,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.9811320754716981,
+      "effective_oracle_success_count": 364,
+      "added_oracle_over_noop_pp": 0.6066666666666667
+    },
+    {
+      "guardian": "rl_final",
+      "checkpoint_path": "outputs/baseline_outer_loop_rl/round_05/guardian_robust",
+      "clean_macro_f1": 0.7946947104065296,
+      "clean_hate_f1": 0.6208695652173913,
+      "n_test_total": 7500,
+      "n_hate_test": 600,
+      "n_base_missed_noop": 243,
+      "n_base_caught_noop": 357,
+      "raw_noop_asr": 0.405,
+      "raw_oracle_asr": 0.47833333333333333,
+      "raw_oracle_success_count": 287,
+      "effective_oracle_asr_conditioned_on_noop_caught": 0.12324929971988796,
+      "effective_oracle_success_count": 44,
+      "added_oracle_over_noop_pp": 0.0733333333333333
+    }
+  ],
+  "per_action": [
+    {
+      "guardian": "initial",
+      "action": "noop",
+      "raw_asr": 0.38166666666666665,
+      "raw_success_count": 229,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "initial",
+      "action": "typo",
+      "raw_asr": 0.5483333333333333,
+      "raw_success_count": 329,
+      "effective_asr_conditioned_on_noop_caught": 0.29649595687331537,
+      "effective_success_count": 110
+    },
+    {
+      "guardian": "initial",
+      "action": "leetspeak",
+      "raw_asr": 0.9716666666666667,
+      "raw_success_count": 583,
+      "effective_asr_conditioned_on_noop_caught": 0.954177897574124,
+      "effective_success_count": 354
+    },
+    {
+      "guardian": "initial",
+      "action": "whitespace",
+      "raw_asr": 0.38166666666666665,
+      "raw_success_count": 229,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "initial",
+      "action": "homoglyph",
+      "raw_asr": 0.8533333333333334,
+      "raw_success_count": 512,
+      "effective_asr_conditioned_on_noop_caught": 0.7654986522911051,
+      "effective_success_count": 284
+    },
+    {
+      "guardian": "initial",
+      "action": "synonym",
+      "raw_asr": 0.44333333333333336,
+      "raw_success_count": 266,
+      "effective_asr_conditioned_on_noop_caught": 0.11590296495956873,
+      "effective_success_count": 43
+    },
+    {
+      "guardian": "initial",
+      "action": "emoji",
+      "raw_asr": 0.4,
+      "raw_success_count": 240,
+      "effective_asr_conditioned_on_noop_caught": 0.03234501347708895,
+      "effective_success_count": 12
+    },
+    {
+      "guardian": "rl_final",
+      "action": "noop",
+      "raw_asr": 0.405,
+      "raw_success_count": 243,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl_final",
+      "action": "typo",
+      "raw_asr": 0.07333333333333333,
+      "raw_success_count": 44,
+      "effective_asr_conditioned_on_noop_caught": 0.025210084033613446,
+      "effective_success_count": 9
+    },
+    {
+      "guardian": "rl_final",
+      "action": "leetspeak",
+      "raw_asr": 0.005,
+      "raw_success_count": 3,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl_final",
+      "action": "whitespace",
+      "raw_asr": 0.405,
+      "raw_success_count": 243,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl_final",
+      "action": "homoglyph",
+      "raw_asr": 0.005,
+      "raw_success_count": 3,
+      "effective_asr_conditioned_on_noop_caught": 0.0,
+      "effective_success_count": 0
+    },
+    {
+      "guardian": "rl_final",
+      "action": "synonym",
+      "raw_asr": 0.42833333333333334,
+      "raw_success_count": 257,
+      "effective_asr_conditioned_on_noop_caught": 0.10364145658263306,
+      "effective_success_count": 37
+    },
+    {
+      "guardian": "rl_final",
+      "action": "emoji",
+      "raw_asr": 0.3233333333333333,
+      "raw_success_count": 194,
+      "effective_asr_conditioned_on_noop_caught": 0.0056022408963585435,
+      "effective_success_count": 2
+    }
+  ]
+}

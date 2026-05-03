@@ -1,0 +1,3 @@
+guardian,checkpoint_path,clean_macro_f1,clean_hate_f1,n_test_total,n_hate_test,n_base_missed_noop,n_base_caught_noop,raw_noop_asr,raw_oracle_asr,raw_oracle_success_count,effective_oracle_asr_conditioned_on_noop_caught,effective_oracle_success_count,added_oracle_over_noop_pp
+rl_final,outputs/baseline_outer_loop_rl/round_05/guardian_robust,0.7946947104065296,0.6208695652173913,7500,600,243,357,0.405,0.47833333333333333,287,0.12324929971988796,44,0.0733333333333333
+initial,outputs/run_029/guardian_best,0.8097943482614384,0.6486013986013986,7500,600,229,371,0.38166666666666665,0.9883333333333333,593,0.9811320754716981,364,0.6066666666666667
