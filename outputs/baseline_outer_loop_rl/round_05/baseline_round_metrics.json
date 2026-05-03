@@ -1,0 +1,68 @@
+{
+  "strategy": "rl",
+  "round": 5,
+  "strategy_info": {
+    "chosen_action": "rl_argmax_policy",
+    "policy_path": "outputs/baseline_outer_loop_rl/round_05/evader_policy.pt"
+  },
+  "pre_clean_macro_f1": 0.8008949232242426,
+  "pre_clean_hate_f1": 0.6313901345291479,
+  "pre_oracle_asr": 0.51,
+  "train_attack_asr": 0.07862759113652609,
+  "action_distribution": {
+    "noop": 0.0,
+    "typo": 0.0,
+    "leetspeak": 0.0,
+    "whitespace": 0.0,
+    "homoglyph": 0.0,
+    "synonym": 1.0,
+    "emoji": 0.0
+  },
+  "dominant_action": "synonym",
+  "pre_robust_cumulative_asr": 0.029092208720514653,
+  "post_clean_macro_f1": 0.7946947104065296,
+  "post_clean_hate_f1": 0.6208695652173913,
+  "post_robust_cumulative_asr": 0.013438170121515368,
+  "post_oracle_asr": 0.475,
+  "post_action_eval": {
+    "noop": {
+      "asr": 0.405,
+      "mean_hate_probability": 0.5930320902920236,
+      "count": 600
+    },
+    "typo": {
+      "asr": 0.08,
+      "mean_hate_probability": 0.9194705899825203,
+      "count": 600
+    },
+    "leetspeak": {
+      "asr": 0.0,
+      "mean_hate_probability": 0.9999446627497673,
+      "count": 600
+    },
+    "whitespace": {
+      "asr": 0.405,
+      "mean_hate_probability": 0.5930320902920236,
+      "count": 600
+    },
+    "homoglyph": {
+      "asr": 0.0033333333333333335,
+      "mean_hate_probability": 0.996670620017491,
+      "count": 600
+    },
+    "synonym": {
+      "asr": 0.43,
+      "mean_hate_probability": 0.5649102418130375,
+      "count": 600
+    },
+    "emoji": {
+      "asr": 0.335,
+      "mean_hate_probability": 0.6662504379320247,
+      "count": 600
+    },
+    "oracle_best_of_all": {
+      "asr": 0.475,
+      "count": 600
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "strategy": "rl",
+  "rounds": 5,
+  "final_clean_macro_f1": 0.7946947104065296,
+  "final_clean_hate_f1": 0.6208695652173913,
+  "final_oracle_asr": 0.475,
+  "final_cumulative_stress_asr": 0.013438170121515368,
+  "final_dominant_action": "synonym",
+  "final_guardian_path": "outputs/baseline_outer_loop_rl/round_05/guardian_robust"
+}

@@ -1,0 +1,10 @@
+{
+  "strategy": "greedy",
+  "rounds": 5,
+  "final_clean_macro_f1": 0.7955228550665996,
+  "final_clean_hate_f1": 0.6219081272084805,
+  "final_oracle_asr": 0.5033333333333333,
+  "final_cumulative_stress_asr": 0.01065046461758399,
+  "final_dominant_action": "synonym",
+  "final_guardian_path": "outputs/baseline_outer_loop_greedy/round_05/guardian_robust"
+}

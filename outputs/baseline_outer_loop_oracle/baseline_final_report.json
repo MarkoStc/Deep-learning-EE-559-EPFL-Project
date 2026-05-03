@@ -1,0 +1,10 @@
+{
+  "strategy": "oracle",
+  "rounds": 5,
+  "final_clean_macro_f1": 0.7977899293688767,
+  "final_clean_hate_f1": 0.6263157894736842,
+  "final_oracle_asr": 0.4816666666666667,
+  "final_cumulative_stress_asr": 0.009006433166547534,
+  "final_dominant_action": "noop",
+  "final_guardian_path": "outputs/baseline_outer_loop_oracle/round_05/guardian_robust"
+}

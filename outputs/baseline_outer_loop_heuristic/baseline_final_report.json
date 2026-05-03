@@ -1,0 +1,10 @@
+{
+  "strategy": "heuristic",
+  "rounds": 5,
+  "final_clean_macro_f1": 0.8002650267599836,
+  "final_clean_hate_f1": 0.6303571428571428,
+  "final_oracle_asr": 0.54,
+  "final_cumulative_stress_asr": 7.14796283059328e-05,
+  "final_dominant_action": "leetspeak",
+  "final_guardian_path": "outputs/baseline_outer_loop_heuristic/round_05/guardian_robust"
+}

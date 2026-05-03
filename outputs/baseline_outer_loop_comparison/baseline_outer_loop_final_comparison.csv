@@ -1,0 +1,6 @@
+strategy,rounds,final_clean_macro_f1,final_clean_hate_f1,final_oracle_asr,final_cumulative_stress_asr,final_dominant_action,final_guardian_path
+rl,5,0.7946947104065296,0.6208695652173913,0.475,0.013438170121515368,synonym,outputs/baseline_outer_loop_rl/round_05/guardian_robust
+oracle,5,0.7977899293688767,0.6263157894736842,0.4816666666666667,0.009006433166547534,noop,outputs/baseline_outer_loop_oracle/round_05/guardian_robust
+greedy,5,0.7955228550665996,0.6219081272084805,0.5033333333333333,0.01065046461758399,synonym,outputs/baseline_outer_loop_greedy/round_05/guardian_robust
+random,5,0.7959450621321125,0.6218181818181818,0.5216666666666666,0.004431736954967834,emoji,outputs/baseline_outer_loop_random/round_05/guardian_robust
+heuristic,5,0.8002650267599836,0.6303571428571428,0.54,7.14796283059328e-05,leetspeak,outputs/baseline_outer_loop_heuristic/round_05/guardian_robust

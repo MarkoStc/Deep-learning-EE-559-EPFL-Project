@@ -1,0 +1,10 @@
+{
+  "strategy": "random",
+  "rounds": 5,
+  "final_clean_macro_f1": 0.7959450621321125,
+  "final_clean_hate_f1": 0.6218181818181818,
+  "final_oracle_asr": 0.5216666666666666,
+  "final_cumulative_stress_asr": 0.004431736954967834,
+  "final_dominant_action": "emoji",
+  "final_guardian_path": "outputs/baseline_outer_loop_random/round_05/guardian_robust"
+}
