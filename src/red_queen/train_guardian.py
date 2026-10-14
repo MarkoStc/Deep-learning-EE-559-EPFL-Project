@@ -5,17 +5,24 @@ Usage:
 """
 
 import argparse
-import torch
-from torch.utils.data import DataLoader
-from torch.optim import AdamW
-from transformers import get_linear_schedule_with_warmup
-from sklearn.metrics import f1_score, classification_report
-from pathlib import Path
-from tqdm import tqdm
 
-from red_queen.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
+import torch
+from sklearn.metrics import classification_report, f1_score
+from torch.optim import AdamW
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from transformers import get_linear_schedule_with_warmup
+
 from red_queen.data_loading import load_and_split
 from red_queen.models import Guardian
+from red_queen.utils import (
+    create_run_dir,
+    get_device,
+    load_config,
+    save_config_snapshot,
+    save_metrics,
+    set_seed,
+)
 
 
 def train_one_epoch(guardian, dataloader, optimizer, scheduler, device):
@@ -100,34 +107,32 @@ def main():
     )
     total_steps = len(train_loader) * gcfg["epochs"]
     warmup_steps = int(total_steps * gcfg["warmup_ratio"])
-    scheduler = get_linear_schedule_with_warmup(
-        optimizer, warmup_steps, total_steps
-    )
+    scheduler = get_linear_schedule_with_warmup(optimizer, warmup_steps, total_steps)
 
     # ── Training loop ────────────────────────────────────────
     best_f1 = 0
     history = []
 
     for epoch in range(gcfg["epochs"]):
-        train_loss = train_one_epoch(
-            guardian, train_loader, optimizer, scheduler, device
-        )
+        train_loss = train_one_epoch(guardian, train_loader, optimizer, scheduler, device)
         val_metrics = evaluate(guardian, val_loader, device)
 
         print(
-            f"Epoch {epoch+1}/{gcfg['epochs']} — "
+            f"Epoch {epoch + 1}/{gcfg['epochs']} — "
             f"train_loss: {train_loss:.4f}, "
             f"val_loss: {val_metrics['loss']:.4f}, "
             f"val_macro_f1: {val_metrics['macro_f1']:.4f}"
         )
 
-        history.append({
-            "epoch": epoch + 1,
-            "train_loss": train_loss,
-            "val_loss": val_metrics["loss"],
-            "val_macro_f1": val_metrics["macro_f1"],
-            "val_weighted_f1": val_metrics["weighted_f1"],
-        })
+        history.append(
+            {
+                "epoch": epoch + 1,
+                "train_loss": train_loss,
+                "val_loss": val_metrics["loss"],
+                "val_macro_f1": val_metrics["macro_f1"],
+                "val_weighted_f1": val_metrics["weighted_f1"],
+            }
+        )
 
         if val_metrics["macro_f1"] > best_f1:
             best_f1 = val_metrics["macro_f1"]
@@ -136,11 +141,15 @@ def main():
 
     # ── Save training history ────────────────────────────────
     import pandas as pd
+
     pd.DataFrame(history).to_csv(run_dir / "guardian_training_history.csv", index=False)
-    save_metrics({"best_val_macro_f1": best_f1, "history": history}, run_dir / "guardian_metrics.json")
+    save_metrics(
+        {"best_val_macro_f1": best_f1, "history": history}, run_dir / "guardian_metrics.json"
+    )
 
     # ── Plot training curve ──────────────────────────────────
     import matplotlib.pyplot as plt
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
     epochs_range = [h["epoch"] for h in history]

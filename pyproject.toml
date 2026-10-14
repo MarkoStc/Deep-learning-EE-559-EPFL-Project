@@ -63,3 +63,70 @@ explicit = true
 name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Legacy modules from the course project. Each refactor branch removes its
+# module from this list when it replaces it; the list must end up empty.
+exclude = [
+    "src/red_queen/data_loading.py",
+    "src/red_queen/evader_env.py",
+    "src/red_queen/evader_policy.py",
+    "src/red_queen/evaluate.py",
+    "src/red_queen/generate_stress_cases.py",
+    "src/red_queen/models.py",
+    "src/red_queen/outer_loop.py",
+    "src/red_queen/preprocess.py",
+    "src/red_queen/robust_train.py",
+    "src/red_queen/train_guardian.py",
+    "src/red_queen/utils.py",
+]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "RUF", "PTH", "PL", "NPY"]
+ignore = [
+    "PLR0913",  # ML entry points take many hyperparameters
+    "PLR2004",  # comparisons with small literals in metrics code are clear
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004", "PLC0415"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+strict = true
+warn_unreachable = true
+# Same legacy list as ruff; shrinks to nothing during the refactor.
+exclude = [
+    'src/red_queen/data_loading.py$',
+    'src/red_queen/evader_env.py$',
+    'src/red_queen/evader_policy.py$',
+    'src/red_queen/evaluate.py$',
+    'src/red_queen/generate_stress_cases.py$',
+    'src/red_queen/models.py$',
+    'src/red_queen/outer_loop.py$',
+    'src/red_queen/preprocess.py$',
+    'src/red_queen/robust_train.py$',
+    'src/red_queen/train_guardian.py$',
+    'src/red_queen/utils.py$',
+]
+
+[[tool.mypy.overrides]]
+module = ["datasets.*", "sklearn.*", "seaborn.*", "nltk.*", "emoji.*", "transformers.*", "tokenizers.*", "pyarrow.*", "tensorboard.*", "torch.utils.tensorboard.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = ["slow: end-to-end tests that build a tiny model (deselect with -m 'not slow')"]
+
+[tool.coverage.run]
+source = ["red_queen"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true

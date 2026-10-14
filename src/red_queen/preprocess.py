@@ -14,9 +14,10 @@ All perturbations operate on already-labeled text. No new hateful content
 is generated — only surface-level transformations.
 """
 
-import re
 import random
+import re
 import string
+
 import numpy as np
 
 # Action names for logging / display
@@ -35,11 +36,13 @@ NUM_ACTIONS = len(ACTION_NAMES)
 
 # ── 0. Noop ─────────────────────────────────────────────────
 
+
 def perturb_noop(text: str, cfg: dict = None) -> str:
     return text
 
 
 # ── 1. Typo injection ───────────────────────────────────────
+
 
 def perturb_typo(text: str, cfg: dict = None) -> str:
     """Randomly swap, delete, or duplicate a character in some words."""
@@ -51,9 +54,9 @@ def perturb_typo(text: str, cfg: dict = None) -> str:
             idx = random.randint(1, len(w) - 2)  # avoid first/last char
             op = random.choice(["swap", "delete", "duplicate"])
             if op == "swap" and idx < len(w) - 1:
-                w = w[:idx] + w[idx + 1] + w[idx] + w[idx + 2:]
+                w = w[:idx] + w[idx + 1] + w[idx] + w[idx + 2 :]
             elif op == "delete":
-                w = w[:idx] + w[idx + 1:]
+                w = w[:idx] + w[idx + 1 :]
             else:  # duplicate
                 w = w[:idx] + w[idx] + w[idx:]
         result.append(w)
@@ -63,9 +66,16 @@ def perturb_typo(text: str, cfg: dict = None) -> str:
 # ── 2. Leetspeak ────────────────────────────────────────────
 
 _LEET_MAP = {
-    "a": "4", "e": "3", "i": "1", "o": "0",
-    "s": "5", "t": "7", "l": "1", "g": "9",
+    "a": "4",
+    "e": "3",
+    "i": "1",
+    "o": "0",
+    "s": "5",
+    "t": "7",
+    "l": "1",
+    "g": "9",
 }
+
 
 def perturb_leetspeak(text: str, cfg: dict = None) -> str:
     """Replace some letters with leet equivalents."""
@@ -88,6 +98,7 @@ _ZERO_WIDTH = [
     "\ufeff",  # zero-width no-break space
 ]
 
+
 def perturb_whitespace(text: str, cfg: dict = None) -> str:
     """Insert zero-width characters or extra spaces into random words."""
     words = text.split()
@@ -104,15 +115,16 @@ def perturb_whitespace(text: str, cfg: dict = None) -> str:
 # ── 4. Homoglyph substitution ──────────────────────────────
 
 _HOMOGLYPHS = {
-    "a": "а",   # cyrillic а
-    "c": "с",   # cyrillic с
-    "e": "е",   # cyrillic е
-    "o": "о",   # cyrillic о
-    "p": "р",   # cyrillic р
-    "x": "х",   # cyrillic х
-    "s": "ѕ",   # cyrillic ѕ
-    "i": "і",   # cyrillic і
+    "a": "а",  # cyrillic а
+    "c": "с",  # cyrillic с
+    "e": "е",  # cyrillic е
+    "o": "о",  # cyrillic о
+    "p": "р",  # cyrillic р
+    "x": "х",  # cyrillic х
+    "s": "ѕ",  # cyrillic ѕ
+    "i": "і",  # cyrillic і
 }
+
 
 def perturb_homoglyph(text: str, cfg: dict = None) -> str:
     """Replace some ASCII characters with visually identical Unicode."""
@@ -128,10 +140,12 @@ def perturb_homoglyph(text: str, cfg: dict = None) -> str:
 
 # ── 5. Synonym swap ─────────────────────────────────────────
 
+
 def _get_synonyms(word: str) -> list:
     """Get WordNet synonyms for a word. Returns empty list if nltk unavailable."""
     try:
         from nltk.corpus import wordnet
+
         synsets = wordnet.synsets(word)
         synonyms = set()
         for syn in synsets[:3]:  # limit search
@@ -146,15 +160,10 @@ def _get_synonyms(word: str) -> list:
 
 def perturb_synonym(text: str, cfg: dict = None) -> str:
     """Replace 1-2 words with WordNet synonyms."""
-    max_replace = (cfg or {}).get("perturbation", {}).get(
-        "synonym_max_replacements", 2
-    )
+    max_replace = (cfg or {}).get("perturbation", {}).get("synonym_max_replacements", 2)
     words = text.split()
     # Pick candidate words (longer words more likely to have synonyms)
-    candidates = [
-        (i, w) for i, w in enumerate(words)
-        if len(w) > 3 and w.isalpha()
-    ]
+    candidates = [(i, w) for i, w in enumerate(words) if len(w) > 3 and w.isalpha()]
     random.shuffle(candidates)
 
     replaced = 0
@@ -172,9 +181,24 @@ def perturb_synonym(text: str, cfg: dict = None) -> str:
 # ── 6. Emoji insertion ──────────────────────────────────────
 
 _BENIGN_EMOJIS = [
-    "😊", "👍", "❤️", "🙂", "✨", "🌟", "💯", "🔥",
-    "😎", "🎉", "👏", "💪", "🙏", "😇", "🌈", "☀️",
+    "😊",
+    "👍",
+    "❤️",
+    "🙂",
+    "✨",
+    "🌟",
+    "💯",
+    "🔥",
+    "😎",
+    "🎉",
+    "👏",
+    "💪",
+    "🙏",
+    "😇",
+    "🌈",
+    "☀️",
 ]
+
 
 def perturb_emoji(text: str, cfg: dict = None) -> str:
     """Insert benign emojis at random positions."""
@@ -199,12 +223,14 @@ PERTURBATION_FNS = [
     perturb_emoji,
 ]
 
+
 def apply_perturbation(text: str, action: int, cfg: dict = None) -> str:
     """Apply perturbation by action index."""
     return PERTURBATION_FNS[action](text, cfg)
 
 
 # ── Text feature extraction (for Evader state) ─────────────
+
 
 def extract_text_features(text: str, guardian_prob: float = 0.5) -> np.ndarray:
     """
@@ -231,17 +257,28 @@ def extract_text_features(text: str, guardian_prob: float = 0.5) -> np.ndarray:
     avg_word_len = np.mean([len(w) for w in words]) / 15.0 if words else 0.0
     avg_word_len = min(avg_word_len, 1.0)
 
-    return np.array([
-        char_len, word_count, upper_frac, punct_frac,
-        has_emoji, has_url, avg_word_len, guardian_prob,
-    ], dtype=np.float32)
+    return np.array(
+        [
+            char_len,
+            word_count,
+            upper_frac,
+            punct_frac,
+            has_emoji,
+            has_url,
+            avg_word_len,
+            guardian_prob,
+        ],
+        dtype=np.float32,
+    )
 
 
 # ── NLTK bootstrap ──────────────────────────────────────────
 
+
 def ensure_nltk_data():
     """Download required NLTK data if not present."""
     import nltk
+
     for resource in ["wordnet", "omw-1.4"]:
         try:
             nltk.data.find(f"corpora/{resource}")

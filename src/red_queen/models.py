@@ -3,12 +3,12 @@ Guardian model: a DistilBERT-based binary hate speech classifier.
 """
 
 import torch
-import torch.nn as nn
+from torch import nn
+from torch.utils.data import Dataset
 from transformers import (
     DistilBertForSequenceClassification,
     DistilBertTokenizerFast,
 )
-from torch.utils.data import Dataset
 
 
 class TextClassificationDataset(Dataset):
@@ -44,18 +44,14 @@ class Guardian:
         self.device = device
         self.max_length = gcfg["max_length"]
 
-        self.tokenizer = DistilBertTokenizerFast.from_pretrained(
-            gcfg["model_name"]
-        )
+        self.tokenizer = DistilBertTokenizerFast.from_pretrained(gcfg["model_name"])
         self.model = DistilBertForSequenceClassification.from_pretrained(
             gcfg["model_name"],
             num_labels=gcfg["num_labels"],
         ).to(device)
 
     def make_dataset(self, texts, labels) -> TextClassificationDataset:
-        return TextClassificationDataset(
-            list(texts), list(labels), self.tokenizer, self.max_length
-        )
+        return TextClassificationDataset(list(texts), list(labels), self.tokenizer, self.max_length)
 
     @torch.no_grad()
     def predict(self, texts: list, batch_size: int = 128) -> list:
@@ -63,10 +59,13 @@ class Guardian:
         self.model.eval()
         all_preds = []
         for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
+            batch = texts[i : i + batch_size]
             enc = self.tokenizer(
-                batch, truncation=True, padding="max_length",
-                max_length=self.max_length, return_tensors="pt",
+                batch,
+                truncation=True,
+                padding="max_length",
+                max_length=self.max_length,
+                return_tensors="pt",
             ).to(self.device)
             logits = self.model(**enc).logits
             preds = torch.argmax(logits, dim=-1)
@@ -79,10 +78,13 @@ class Guardian:
         self.model.eval()
         all_probs = []
         for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
+            batch = texts[i : i + batch_size]
             enc = self.tokenizer(
-                batch, truncation=True, padding="max_length",
-                max_length=self.max_length, return_tensors="pt",
+                batch,
+                truncation=True,
+                padding="max_length",
+                max_length=self.max_length,
+                return_tensors="pt",
             ).to(self.device)
             logits = self.model(**enc).logits
             probs = torch.softmax(logits, dim=-1)[:, 1]
@@ -97,9 +99,7 @@ class Guardian:
 
     def load(self, path: str):
         """Load model and tokenizer from a saved directory."""
-        self.model = DistilBertForSequenceClassification.from_pretrained(
-            path
-        ).to(self.device)
+        self.model = DistilBertForSequenceClassification.from_pretrained(path).to(self.device)
         self.tokenizer = DistilBertTokenizerFast.from_pretrained(path)
         print(f"[INFO] Guardian loaded from {path}")
 

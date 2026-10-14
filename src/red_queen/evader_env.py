@@ -9,14 +9,13 @@ Reward: +1 if Guardian misclassifies perturbed hateful text as safe, 0 otherwise
 """
 
 import random
+
 import numpy as np
-import torch
 
 from red_queen.preprocess import (
+    ACTION_NAMES,
     apply_perturbation,
     extract_text_features,
-    ACTION_NAMES,
-    NUM_ACTIONS,
 )
 
 
@@ -46,9 +45,7 @@ class EvaderBanditEnv:
 
     def sample_batch(self) -> list:
         """Sample a random batch of hateful texts."""
-        return random.sample(
-            self.texts, min(self.batch_size, len(self.texts))
-        )
+        return random.sample(self.texts, min(self.batch_size, len(self.texts)))
 
     def get_states(self, texts: list) -> np.ndarray:
         """
@@ -56,9 +53,9 @@ class EvaderBanditEnv:
         Includes Guardian's predicted hate probability as a feature.
         """
         probs = self.guardian.predict_proba(texts)
-        states = np.array([
-            extract_text_features(t, p) for t, p in zip(texts, probs)
-        ], dtype=np.float32)
+        states = np.array(
+            [extract_text_features(t, p) for t, p in zip(texts, probs)], dtype=np.float32
+        )
         return states
 
     def step(self, texts: list, actions: list) -> dict:
@@ -74,10 +71,7 @@ class EvaderBanditEnv:
               perturbed_texts, rewards, attack_success,
               original_preds, perturbed_preds, actions
         """
-        perturbed = [
-            apply_perturbation(t, a, self.cfg)
-            for t, a in zip(texts, actions)
-        ]
+        perturbed = [apply_perturbation(t, a, self.cfg) for t, a in zip(texts, actions)]
 
         # Get Guardian predictions on perturbed texts
         perturbed_preds = self.guardian.predict(perturbed)
