@@ -45,6 +45,7 @@ All notable changes to this project are documented here. The format follows
   from training texts, about half of which it had been retrained on. Stress
   metrics now use the held-out set.
 - Macro-F1 is no longer reported on single-class stress sets.
+- Saving the resume state failed on Windows when a scanner briefly held the new file; the rename now retries.
 - `run_NNN` numbering reused (and overwrote) an existing run after any
   deletion.
 - Loading a Guardian checkpoint downloaded and built the base model first.
