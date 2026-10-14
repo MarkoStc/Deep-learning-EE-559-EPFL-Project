@@ -19,31 +19,33 @@ Usage:
 """
 
 import argparse
-import json
-import copy
-import torch
+
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+import torch
+
 matplotlib.use("Agg")
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pathlib import Path
+from sklearn.metrics import f1_score
 from tqdm import tqdm
-from sklearn.metrics import f1_score, classification_report
 
-from red_queen.utils import load_config, set_seed, get_device, save_metrics, save_config_snapshot
 from red_queen.data_loading import load_and_split
-from red_queen.models import Guardian, EvaderNetwork
-from red_queen.evader_env import EvaderBanditEnv
 from red_queen.evader_policy import train_evader
+from red_queen.models import EvaderNetwork, Guardian
 from red_queen.preprocess import (
-    apply_perturbation, extract_text_features,
-    ACTION_NAMES, NUM_ACTIONS,
+    ACTION_NAMES,
+    NUM_ACTIONS,
+    apply_perturbation,
+    extract_text_features,
 )
-
+from red_queen.utils import get_device, load_config, save_config_snapshot, save_metrics, set_seed
 
 # ── Random baseline: apply each action uniformly and measure ASR ──
+
 
 def random_baseline_evaluation(guardian, hate_texts, cfg):
     """
@@ -66,7 +68,7 @@ def random_baseline_evaluation(guardian, hate_texts, cfg):
     for action_idx in range(NUM_ACTIONS):
         perturbed = [apply_perturbation(t, action_idx, cfg) for t in hate_texts]
         preds = guardian.predict(perturbed)
-        any_success |= (np.array(preds) == 0)
+        any_success |= np.array(preds) == 0
     results["best_of_all"] = {
         "asr": float(any_success.mean()),
         "count": len(hate_texts),
@@ -78,6 +80,7 @@ def random_baseline_evaluation(guardian, hate_texts, cfg):
 
 # ── Stress test with learned policy (greedy) ─────────────────
 
+
 def generate_stress_with_policy(guardian, policy, hate_texts, cfg, device):
     """Apply learned policy greedily to hateful texts. Return DataFrame."""
     ecfg = cfg["evader"]
@@ -85,11 +88,11 @@ def generate_stress_with_policy(guardian, policy, hate_texts, cfg, device):
     batch_size = 64
 
     for i in range(0, len(hate_texts), batch_size):
-        batch = hate_texts[i:i + batch_size]
+        batch = hate_texts[i : i + batch_size]
         probs = guardian.predict_proba(batch)
-        states = np.array([
-            extract_text_features(t, p) for t, p in zip(batch, probs)
-        ], dtype=np.float32)
+        states = np.array(
+            [extract_text_features(t, p) for t, p in zip(batch, probs)], dtype=np.float32
+        )
         state_tensor = torch.tensor(states).to(device)
 
         with torch.no_grad():
@@ -99,19 +102,22 @@ def generate_stress_with_policy(guardian, policy, hate_texts, cfg, device):
         for text, action, prob in zip(batch, actions, probs):
             perturbed = apply_perturbation(text, action, cfg)
             pred = guardian.predict([perturbed])[0]
-            records.append({
-                "original_text": text,
-                "perturbed_text": perturbed,
-                "action": action,
-                "action_name": ACTION_NAMES[action],
-                "guardian_pred": pred,
-                "attack_success": 1 if pred == 0 else 0,
-            })
+            records.append(
+                {
+                    "original_text": text,
+                    "perturbed_text": perturbed,
+                    "action": action,
+                    "action_name": ACTION_NAMES[action],
+                    "guardian_pred": pred,
+                    "attack_success": 1 if pred == 0 else 0,
+                }
+            )
 
     return pd.DataFrame(records)
 
 
 # ── Evaluate guardian on a stress DataFrame ───────────────────
+
 
 def eval_on_stress_df(guardian, stress_df):
     """Evaluate guardian on stress cases. Returns dict of metrics."""
@@ -145,6 +151,7 @@ def eval_on_stress_df(guardian, stress_df):
 
 # ── Clean test evaluation ─────────────────────────────────────
 
+
 def eval_clean(guardian, test_texts, test_labels):
     preds = guardian.predict(test_texts)
     macro_f1 = f1_score(test_labels, preds, average="macro")
@@ -154,10 +161,11 @@ def eval_clean(guardian, test_texts, test_labels):
 
 # ── Robust retrain (inline, returns guardian) ─────────────────
 
+
 def robust_retrain(guardian, train_texts, train_labels, stress_df, cfg, device, save_path):
     """Retrain guardian with augmented data. Returns updated guardian."""
-    from torch.utils.data import DataLoader
     from torch.optim import AdamW
+    from torch.utils.data import DataLoader
     from transformers import get_linear_schedule_with_warmup
 
     rcfg = cfg["robust"]
@@ -169,7 +177,9 @@ def robust_retrain(guardian, train_texts, train_labels, stress_df, cfg, device, 
     aug_ratio = rcfg["augmentation_ratio"]
     n_aug = int(len(stress_texts) * aug_ratio)
     if n_aug > 0:
-        indices = np.random.choice(len(stress_texts), size=min(n_aug, len(stress_texts)), replace=False)
+        indices = np.random.choice(
+            len(stress_texts), size=min(n_aug, len(stress_texts)), replace=False
+        )
         aug_texts = [stress_texts[i] for i in indices]
         aug_labels = [stress_labels[i] for i in indices]
     else:
@@ -181,14 +191,16 @@ def robust_retrain(guardian, train_texts, train_labels, stress_df, cfg, device, 
     train_ds = guardian.make_dataset(combined_texts, combined_labels)
     train_loader = DataLoader(train_ds, batch_size=gcfg["batch_size"], shuffle=True)
 
-    optimizer = AdamW(guardian.model.parameters(), lr=rcfg["learning_rate"], weight_decay=gcfg["weight_decay"])
+    optimizer = AdamW(
+        guardian.model.parameters(), lr=rcfg["learning_rate"], weight_decay=gcfg["weight_decay"]
+    )
     total_steps = len(train_loader) * rcfg["epochs"]
     scheduler = get_linear_schedule_with_warmup(optimizer, 0, total_steps)
 
     for epoch in range(rcfg["epochs"]):
         guardian.model.train()
         total_loss = 0
-        for batch in tqdm(train_loader, desc=f"  Robust epoch {epoch+1}", leave=False):
+        for batch in tqdm(train_loader, desc=f"  Robust epoch {epoch + 1}", leave=False):
             batch = {k: v.to(device) for k, v in batch.items()}
             outputs = guardian.model(**batch)
             loss = outputs.loss
@@ -198,7 +210,7 @@ def robust_retrain(guardian, train_texts, train_labels, stress_df, cfg, device, 
             optimizer.step()
             scheduler.step()
             total_loss += loss.item()
-        print(f"    Robust epoch {epoch+1} loss: {total_loss / len(train_loader):.4f}")
+        print(f"    Robust epoch {epoch + 1} loss: {total_loss / len(train_loader):.4f}")
 
     guardian.save(str(save_path))
     return guardian
@@ -206,11 +218,16 @@ def robust_retrain(guardian, train_texts, train_labels, stress_df, cfg, device, 
 
 # ── Main outer loop ──────────────────────────────────────────
 
+
 def main():
     parser = argparse.ArgumentParser(description="Red Queen Outer Loop")
     parser.add_argument("--config", type=str, default="configs/default.yaml")
-    parser.add_argument("--initial_guardian", type=str, required=True,
-                        help="Path to the initial trained Guardian checkpoint")
+    parser.add_argument(
+        "--initial_guardian",
+        type=str,
+        required=True,
+        help="Path to the initial trained Guardian checkpoint",
+    )
     parser.add_argument("--num_rounds", type=int, default=5)
     parser.add_argument("--output_dir", type=str, default="outputs/arms_race")
     args = parser.parse_args()
@@ -243,24 +260,26 @@ def main():
     all_stress_dfs = []  # cumulative stress cases
 
     for rnd in range(args.num_rounds):
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"  ROUND {rnd + 1} / {args.num_rounds}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         round_dir = out / f"round_{rnd + 1:02d}"
         round_dir.mkdir(parents=True, exist_ok=True)
 
         # ── 0. Evaluate current Guardian on clean test ───────
-        print(f"\n[Round {rnd+1}] Evaluating Guardian on clean test...")
+        print(f"\n[Round {rnd + 1}] Evaluating Guardian on clean test...")
         clean_metrics = eval_clean(guardian, test_texts, test_labels)
-        print(f"  Clean macro-F1: {clean_metrics['macro_f1']:.4f}, hate-F1: {clean_metrics['hate_f1']:.4f}")
+        print(
+            f"  Clean macro-F1: {clean_metrics['macro_f1']:.4f}, hate-F1: {clean_metrics['hate_f1']:.4f}"
+        )
 
         # ── 1. Random baseline (brute-force per-action ASR) ──
-        print(f"\n[Round {rnd+1}] Running random baseline on test hate texts...")
+        print(f"\n[Round {rnd + 1}] Running random baseline on test hate texts...")
         random_bl = random_baseline_evaluation(guardian, hate_test, cfg)
 
         # ── 2. Train Evader against current Guardian ─────────
-        print(f"\n[Round {rnd+1}] Training Evader...")
+        print(f"\n[Round {rnd + 1}] Training Evader...")
         temp_guardian_path = round_dir / "guardian_input"
         guardian.save(str(temp_guardian_path))
         train_evader(cfg, str(temp_guardian_path), round_dir)
@@ -273,10 +292,8 @@ def main():
         policy_net.eval()
 
         # ── 3. Generate stress cases ─────────────────────────
-        print(f"\n[Round {rnd+1}] Generating stress cases...")
-        stress_df = generate_stress_with_policy(
-            guardian, policy_net, hate_train, cfg, device
-        )
+        print(f"\n[Round {rnd + 1}] Generating stress cases...")
+        stress_df = generate_stress_with_policy(guardian, policy_net, hate_train, cfg, device)
         stress_df.to_parquet(round_dir / "stress_cases.parquet", index=False)
 
         # Log which actions the Evader chose
@@ -305,16 +322,20 @@ def main():
         print(f"  Pre-robust cumulative ASR: {pre_robust_cumulative['overall_asr']:.4f}")
 
         # ── 5. Robust retrain ────────────────────────────────
-        print(f"\n[Round {rnd+1}] Robust retraining...")
+        print(f"\n[Round {rnd + 1}] Robust retraining...")
         # Use ALL cumulative stress cases for retraining
         guardian = robust_retrain(
-            guardian, train_texts, train_labels,
-            cumulative_stress, cfg, device,
+            guardian,
+            train_texts,
+            train_labels,
+            cumulative_stress,
+            cfg,
+            device,
             save_path=round_dir / "guardian_robust",
         )
 
         # ── 6. Post-retrain evaluation ───────────────────────
-        print(f"\n[Round {rnd+1}] Post-retrain evaluation...")
+        print(f"\n[Round {rnd + 1}] Post-retrain evaluation...")
         post_clean = eval_clean(guardian, test_texts, test_labels)
         print(f"  Post-robust clean macro-F1: {post_clean['macro_f1']:.4f}")
 
@@ -322,7 +343,7 @@ def main():
         print(f"  Post-robust cumulative ASR: {post_cumulative['overall_asr']:.4f}")
 
         # Per-action ASR after robust retrain (using random application)
-        print(f"\n[Round {rnd+1}] Post-retrain per-action ASR (random baseline)...")
+        print(f"\n[Round {rnd + 1}] Post-retrain per-action ASR (random baseline)...")
         post_random_bl = random_baseline_evaluation(guardian, hate_test, cfg)
 
         # ── Record round results ─────────────────────────────
@@ -355,20 +376,22 @@ def main():
         dist = r["evader_action_distribution"]
         dominant = max(dist, key=dist.get) if dist else "none"
 
-        summary_rows.append({
-            "Round": r["round"],
-            "Clean Macro-F1 (pre)": f"{r['pre_clean_macro_f1']:.4f}",
-            "Clean Macro-F1 (post)": f"{r['post_clean_macro_f1']:.4f}",
-            "Evader ASR": f"{r['evader_asr']:.4f}",
-            "Dominant Action": dominant,
-            "Cumul ASR (pre-robust)": f"{r['pre_robust_cumulative_asr']:.4f}",
-            "Cumul ASR (post-robust)": f"{r['post_robust_cumulative_asr']:.4f}",
-        })
+        summary_rows.append(
+            {
+                "Round": r["round"],
+                "Clean Macro-F1 (pre)": f"{r['pre_clean_macro_f1']:.4f}",
+                "Clean Macro-F1 (post)": f"{r['post_clean_macro_f1']:.4f}",
+                "Evader ASR": f"{r['evader_asr']:.4f}",
+                "Dominant Action": dominant,
+                "Cumul ASR (pre-robust)": f"{r['pre_robust_cumulative_asr']:.4f}",
+                "Cumul ASR (post-robust)": f"{r['post_robust_cumulative_asr']:.4f}",
+            }
+        )
     summary_df = pd.DataFrame(summary_rows)
     summary_df.to_csv(out / "summary_table.csv", index=False)
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("ARMS RACE SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(summary_df.to_string(index=False))
 
     # ── Plot 1: ASR across rounds ────────────────────────────
@@ -377,7 +400,9 @@ def main():
     rounds = [r["round"] for r in round_results]
 
     # Evader ASR per round
-    axes[0].plot(rounds, [r["evader_asr"] for r in round_results], "o-", color="#c44e52", linewidth=2)
+    axes[0].plot(
+        rounds, [r["evader_asr"] for r in round_results], "o-", color="#c44e52", linewidth=2
+    )
     axes[0].set_xlabel("Round")
     axes[0].set_ylabel("Attack Success Rate")
     axes[0].set_title("Evader ASR per Round")
@@ -385,10 +410,22 @@ def main():
     axes[0].grid(alpha=0.3)
 
     # Clean performance across rounds
-    axes[1].plot(rounds, [r["pre_clean_macro_f1"] for r in round_results], "s-",
-                 label="Pre-robust", color="#4c72b0", linewidth=2)
-    axes[1].plot(rounds, [r["post_clean_macro_f1"] for r in round_results], "^-",
-                 label="Post-robust", color="#dd8452", linewidth=2)
+    axes[1].plot(
+        rounds,
+        [r["pre_clean_macro_f1"] for r in round_results],
+        "s-",
+        label="Pre-robust",
+        color="#4c72b0",
+        linewidth=2,
+    )
+    axes[1].plot(
+        rounds,
+        [r["post_clean_macro_f1"] for r in round_results],
+        "^-",
+        label="Post-robust",
+        color="#dd8452",
+        linewidth=2,
+    )
     axes[1].set_xlabel("Round")
     axes[1].set_ylabel("Macro-F1")
     axes[1].set_title("Clean Test Performance")
@@ -397,10 +434,22 @@ def main():
     axes[1].grid(alpha=0.3)
 
     # Cumulative ASR pre vs post
-    axes[2].plot(rounds, [r["pre_robust_cumulative_asr"] for r in round_results], "o-",
-                 label="Pre-robust", color="#c44e52", linewidth=2)
-    axes[2].plot(rounds, [r["post_robust_cumulative_asr"] for r in round_results], "^-",
-                 label="Post-robust", color="#55a868", linewidth=2)
+    axes[2].plot(
+        rounds,
+        [r["pre_robust_cumulative_asr"] for r in round_results],
+        "o-",
+        label="Pre-robust",
+        color="#c44e52",
+        linewidth=2,
+    )
+    axes[2].plot(
+        rounds,
+        [r["post_robust_cumulative_asr"] for r in round_results],
+        "^-",
+        label="Post-robust",
+        color="#55a868",
+        linewidth=2,
+    )
     axes[2].set_xlabel("Round")
     axes[2].set_ylabel("Cumulative ASR")
     axes[2].set_title("Cumulative Stress Test ASR")
@@ -423,9 +472,17 @@ def main():
             heatmap_data[i, j] = bl.get("asr", 0.0)
 
     fig, ax = plt.subplots(figsize=(max(8, len(round_results) * 1.5), 6))
-    sns.heatmap(heatmap_data, annot=True, fmt=".3f", cmap="RdYlGn_r",
-                xticklabels=[f"Round {r['round']}" for r in round_results],
-                yticklabels=action_names, ax=ax, vmin=0, vmax=1)
+    sns.heatmap(
+        heatmap_data,
+        annot=True,
+        fmt=".3f",
+        cmap="RdYlGn_r",
+        xticklabels=[f"Round {r['round']}" for r in round_results],
+        yticklabels=action_names,
+        ax=ax,
+        vmin=0,
+        vmax=1,
+    )
     ax.set_title("Per-Action ASR After Robust Retraining (Random Baseline)")
     ax.set_ylabel("Perturbation Type")
     ax.set_xlabel("Round")
@@ -457,11 +514,27 @@ def main():
         x = np.arange(len(action_names))
         width = 0.35
 
-        first_asrs = [round_results[0]["random_baseline_pre"].get(a, {}).get("asr", 0) for a in action_names]
-        final_asrs = [round_results[-1]["random_baseline_post"].get(a, {}).get("asr", 0) for a in action_names]
+        first_asrs = [
+            round_results[0]["random_baseline_pre"].get(a, {}).get("asr", 0) for a in action_names
+        ]
+        final_asrs = [
+            round_results[-1]["random_baseline_post"].get(a, {}).get("asr", 0) for a in action_names
+        ]
 
-        ax.bar(x - width / 2, first_asrs, width, label=f"Guardian v1 (before any robustness)", color="#c44e52")
-        ax.bar(x + width / 2, final_asrs, width, label=f"Guardian v{len(round_results)+1} (after {len(round_results)} rounds)", color="#55a868")
+        ax.bar(
+            x - width / 2,
+            first_asrs,
+            width,
+            label="Guardian v1 (before any robustness)",
+            color="#c44e52",
+        )
+        ax.bar(
+            x + width / 2,
+            final_asrs,
+            width,
+            label=f"Guardian v{len(round_results) + 1} (after {len(round_results)} rounds)",
+            color="#55a868",
+        )
         ax.set_xticks(x)
         ax.set_xticklabels(action_names, rotation=30, ha="right")
         ax.set_ylabel("Attack Success Rate")
@@ -473,7 +546,7 @@ def main():
         plt.close()
 
     print(f"\n[INFO] All results saved to {out}")
-    print(f"[INFO] Key plots:")
+    print("[INFO] Key plots:")
     print(f"  {out / 'arms_race_dynamics.png'}")
     print(f"  {out / 'per_action_heatmap.png'}")
     print(f"  {out / 'action_selection_across_rounds.png'}")

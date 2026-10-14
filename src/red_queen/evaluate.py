@@ -12,24 +12,28 @@ Usage:
 """
 
 import argparse
-import json
-import torch
-import pandas as pd
-import numpy as np
+
 import matplotlib
+import numpy as np
+import pandas as pd
+
 matplotlib.use("Agg")
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pathlib import Path
 from sklearn.metrics import (
-    f1_score, precision_score, recall_score,
-    classification_report, confusion_matrix,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    precision_score,
+    recall_score,
 )
 
-from red_queen.utils import load_config, set_seed, get_device, save_metrics
 from red_queen.data_loading import load_and_split
 from red_queen.models import Guardian
-from red_queen.preprocess import apply_perturbation, ACTION_NAMES, NUM_ACTIONS
+from red_queen.preprocess import ACTION_NAMES
+from red_queen.utils import get_device, load_config, save_metrics, set_seed
 
 
 def eval_on_texts(guardian, texts, labels, tag=""):
@@ -77,8 +81,16 @@ def eval_fairness(guardian, test_df, identity_cols=None):
     """
     if identity_cols is None:
         identity_cols = [
-            "male", "female", "black", "white", "asian", "latino",
-            "homosexual_gay_or_lesbian", "muslim", "christian", "jewish",
+            "male",
+            "female",
+            "black",
+            "white",
+            "asian",
+            "latino",
+            "homosexual_gay_or_lesbian",
+            "muslim",
+            "christian",
+            "jewish",
         ]
     available = [c for c in identity_cols if c in test_df.columns]
     if not available:
@@ -106,9 +118,15 @@ def eval_fairness(guardian, test_df, identity_cols=None):
 def plot_confusion_matrix(cm, title, path):
     """Plot and save a confusion matrix."""
     fig, ax = plt.subplots(figsize=(5, 4))
-    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-                xticklabels=["safe", "hate"],
-                yticklabels=["safe", "hate"], ax=ax)
+    sns.heatmap(
+        cm,
+        annot=True,
+        fmt="d",
+        cmap="Blues",
+        xticklabels=["safe", "hate"],
+        yticklabels=["safe", "hate"],
+        ax=ax,
+    )
     ax.set_xlabel("Predicted")
     ax.set_ylabel("True")
     ax.set_title(title)
@@ -149,8 +167,7 @@ def plot_clean_vs_stress(baseline_clean, baseline_stress, robust_clean, robust_s
 
 def plot_asr_by_action(action_results_baseline, action_results_robust, path):
     """Bar chart of ASR by perturbation type, baseline vs robust."""
-    actions = sorted(set(list(action_results_baseline.keys()) +
-                        list(action_results_robust.keys())))
+    actions = sorted(set(list(action_results_baseline.keys()) + list(action_results_robust.keys())))
     if not actions:
         return
 
@@ -158,7 +175,9 @@ def plot_asr_by_action(action_results_baseline, action_results_robust, path):
     width = 0.35
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    baseline_asrs = [action_results_baseline.get(a, {}).get("attack_success_rate", 0) for a in actions]
+    baseline_asrs = [
+        action_results_baseline.get(a, {}).get("attack_success_rate", 0) for a in actions
+    ]
     robust_asrs = [action_results_robust.get(a, {}).get("attack_success_rate", 0) for a in actions]
 
     ax.bar(x - width / 2, baseline_asrs, width, label="Baseline", color="#4c72b0")
@@ -177,8 +196,7 @@ def plot_asr_by_action(action_results_baseline, action_results_robust, path):
 
 def plot_fairness(fairness_baseline, fairness_robust, path):
     """Grouped bar chart of per-subgroup F1."""
-    groups = sorted(set(list(fairness_baseline.keys()) +
-                       list(fairness_robust.keys())))
+    groups = sorted(set(list(fairness_baseline.keys()) + list(fairness_robust.keys())))
     if not groups:
         return
 
@@ -207,10 +225,12 @@ def main():
     parser = argparse.ArgumentParser(description="Full evaluation pipeline")
     parser.add_argument("--config", type=str, default="configs/default.yaml")
     parser.add_argument("--baseline_path", type=str, required=True)
-    parser.add_argument("--robust_path", type=str, default=None,
-                        help="Path to robust Guardian (optional)")
-    parser.add_argument("--stress_cases", type=str, default=None,
-                        help="Path to stress_cases.parquet (optional)")
+    parser.add_argument(
+        "--robust_path", type=str, default=None, help="Path to robust Guardian (optional)"
+    )
+    parser.add_argument(
+        "--stress_cases", type=str, default=None, help="Path to stress_cases.parquet (optional)"
+    )
     parser.add_argument("--output_dir", type=str, default="outputs/evaluation")
     args = parser.parse_args()
 
@@ -237,7 +257,8 @@ def main():
 
     plot_confusion_matrix(
         np.array(bl_clean["confusion_matrix"]),
-        "Baseline — Clean Test", out / "cm_baseline_clean.png",
+        "Baseline — Clean Test",
+        out / "cm_baseline_clean.png",
     )
 
     # ── Evaluate on stress cases ─────────────────────────────
@@ -257,14 +278,14 @@ def main():
         print(f"  ASR:       {1 - bl_stress['hate_recall']:.4f}")
 
         action_bl = eval_stress_by_action(baseline, stress_df)
-        print(f"  ASR by action:")
+        print("  ASR by action:")
         for name, data in sorted(action_bl.items(), key=lambda x: -x[1]["attack_success_rate"]):
             print(f"    {name:15s}: ASR={data['attack_success_rate']:.3f} (n={data['count']})")
 
     # ── Fairness (baseline) ──────────────────────────────────
     fairness_bl = eval_fairness(baseline, splits["test"])
     if fairness_bl:
-        print(f"\n=== Baseline Subgroup Fairness ===")
+        print("\n=== Baseline Subgroup Fairness ===")
         for g, m in sorted(fairness_bl.items()):
             print(f"  {g:30s}: F1={m['hate_f1']:.3f} (n={m['count']})")
 
@@ -278,20 +299,21 @@ def main():
         robust = Guardian(cfg, device)
         robust.load(args.robust_path)
 
-        print(f"\n=== Robust Guardian on Clean Test ===")
+        print("\n=== Robust Guardian on Clean Test ===")
         rb_clean = eval_on_texts(robust, test_texts, test_labels, "robust_clean")
         print(f"  Macro-F1:  {rb_clean['macro_f1']:.4f}")
         print(f"  Hate-F1:   {rb_clean['hate_f1']:.4f}")
 
         plot_confusion_matrix(
             np.array(rb_clean["confusion_matrix"]),
-            "Robust — Clean Test", out / "cm_robust_clean.png",
+            "Robust — Clean Test",
+            out / "cm_robust_clean.png",
         )
 
         if stress_df is not None:
             stress_texts = stress_df["perturbed_text"].tolist()
             stress_labels = [1] * len(stress_texts)
-            print(f"\n=== Robust Guardian on Stress Cases ===")
+            print("\n=== Robust Guardian on Stress Cases ===")
             rb_stress = eval_on_texts(robust, stress_texts, stress_labels, "robust_stress")
             print(f"  Macro-F1:  {rb_stress['macro_f1']:.4f}")
             print(f"  Hate-F1:   {rb_stress['hate_f1']:.4f}")
@@ -301,15 +323,17 @@ def main():
 
             plot_confusion_matrix(
                 np.array(rb_stress["confusion_matrix"]),
-                "Robust — Stress Test", out / "cm_robust_stress.png",
+                "Robust — Stress Test",
+                out / "cm_robust_stress.png",
             )
 
         fairness_rb = eval_fairness(robust, splits["test"])
 
     # ── Plots ────────────────────────────────────────────────
     if bl_stress and rb_clean and rb_stress:
-        plot_clean_vs_stress(bl_clean, bl_stress, rb_clean, rb_stress,
-                             out / "clean_vs_stress_comparison.png")
+        plot_clean_vs_stress(
+            bl_clean, bl_stress, rb_clean, rb_stress, out / "clean_vs_stress_comparison.png"
+        )
 
     if action_bl:
         plot_asr_by_action(action_bl, action_rb, out / "asr_by_action.png")
@@ -337,23 +361,29 @@ def main():
 
     # ── Summary table ────────────────────────────────────────
     rows = []
-    for name, m in [("Baseline Clean", bl_clean), ("Baseline Stress", bl_stress),
-                    ("Robust Clean", rb_clean), ("Robust Stress", rb_stress)]:
+    for name, m in [
+        ("Baseline Clean", bl_clean),
+        ("Baseline Stress", bl_stress),
+        ("Robust Clean", rb_clean),
+        ("Robust Stress", rb_stress),
+    ]:
         if m:
-            rows.append({
-                "Condition": name,
-                "Macro-F1": f"{m['macro_f1']:.4f}",
-                "Hate-F1": f"{m['hate_f1']:.4f}",
-                "Hate-Prec": f"{m['hate_precision']:.4f}",
-                "Hate-Rec": f"{m['hate_recall']:.4f}",
-                "Accuracy": f"{m['accuracy']:.4f}",
-            })
+            rows.append(
+                {
+                    "Condition": name,
+                    "Macro-F1": f"{m['macro_f1']:.4f}",
+                    "Hate-F1": f"{m['hate_f1']:.4f}",
+                    "Hate-Prec": f"{m['hate_precision']:.4f}",
+                    "Hate-Rec": f"{m['hate_recall']:.4f}",
+                    "Accuracy": f"{m['accuracy']:.4f}",
+                }
+            )
     if rows:
         summary = pd.DataFrame(rows)
         summary.to_csv(out / "summary_table.csv", index=False)
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(summary.to_string(index=False))
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
     print(f"\n[INFO] All evaluation outputs saved to {out}")
 

@@ -5,18 +5,25 @@ Usage:
 """
 
 import argparse
-import torch
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import torch
 from tqdm import tqdm
 
-from red_queen.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
 from red_queen.data_loading import load_and_split
-from red_queen.models import Guardian, EvaderNetwork
 from red_queen.evader_env import EvaderBanditEnv
+from red_queen.models import EvaderNetwork, Guardian
 from red_queen.preprocess import ACTION_NAMES, NUM_ACTIONS
+from red_queen.utils import (
+    create_run_dir,
+    get_device,
+    load_config,
+    save_config_snapshot,
+    save_metrics,
+    set_seed,
+)
 
 
 def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
@@ -83,17 +90,19 @@ def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
         # Log
         if (episode + 1) % 50 == 0 or episode == 0:
             action_dist = env.get_action_distribution_stats(actions)
-            history.append({
-                "episode": episode + 1,
-                "attack_success_rate": result["attack_success"],
-                "mean_reward": rewards.mean().item(),
-                "policy_loss": policy_loss.item(),
-                "entropy": entropies.mean().item(),
-                **{f"action_{k}": v for k, v in action_dist.items()},
-            })
+            history.append(
+                {
+                    "episode": episode + 1,
+                    "attack_success_rate": result["attack_success"],
+                    "mean_reward": rewards.mean().item(),
+                    "policy_loss": policy_loss.item(),
+                    "entropy": entropies.mean().item(),
+                    **{f"action_{k}": v for k, v in action_dist.items()},
+                }
+            )
             if (episode + 1) % 200 == 0:
                 print(
-                    f"  Ep {episode+1}: ASR={result['attack_success']:.3f}, "
+                    f"  Ep {episode + 1}: ASR={result['attack_success']:.3f}, "
                     f"entropy={entropies.mean().item():.3f}"
                 )
 
@@ -146,8 +155,9 @@ def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
 def main():
     parser = argparse.ArgumentParser(description="Train Evader policy")
     parser.add_argument("--config", type=str, default="configs/default.yaml")
-    parser.add_argument("--guardian_path", type=str, required=True,
-                        help="Path to trained Guardian checkpoint")
+    parser.add_argument(
+        "--guardian_path", type=str, required=True, help="Path to trained Guardian checkpoint"
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.config)

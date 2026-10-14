@@ -3,10 +3,9 @@ Data loading: download datasets from HuggingFace, binarize labels, split.
 Supports: civil_comments (primary), hatexplain (secondary).
 """
 
-import os
-import pandas as pd
-import numpy as np
 from pathlib import Path
+
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
@@ -31,7 +30,9 @@ def load_civil_comments(cfg: dict) -> pd.DataFrame:
                 print(f"[INFO] Loading cached Civil Comments from {cache_path}")
                 print(f"[INFO] Cached columns: {list(df.columns)}")
             else:
-                print(f"[WARN] Cache missing required columns (found: {list(df.columns)}). Re-downloading...")
+                print(
+                    f"[WARN] Cache missing required columns (found: {list(df.columns)}). Re-downloading..."
+                )
                 cache_path.unlink()
         except Exception as e:
             print(f"[WARN] Cache corrupted ({e}). Re-downloading...")
@@ -62,8 +63,7 @@ def load_civil_comments(cfg: dict) -> pd.DataFrame:
                 print("[INFO] Using existing 'label' column from dataset")
             else:
                 raise ValueError(
-                    f"Cannot find toxicity or label column. "
-                    f"Available columns: {list(df.columns)}"
+                    f"Cannot find toxicity or label column. Available columns: {list(df.columns)}"
                 )
         else:
             print(f"[INFO] Using '{toxicity_col}' column with threshold {threshold}")
@@ -79,14 +79,30 @@ def load_civil_comments(cfg: dict) -> pd.DataFrame:
 
         # Add identity columns if they exist (for fairness analysis)
         identity_cols = [
-            "male", "female", "transgender", "other_gender",
-            "heterosexual", "homosexual_gay_or_lesbian", "bisexual",
-            "other_sexual_orientation", "christian", "jewish", "muslim",
-            "hindu", "buddhist", "atheist", "other_religion",
-            "black", "white", "asian", "latino",
-            "other_race_or_ethnicity", "physical_disability",
+            "male",
+            "female",
+            "transgender",
+            "other_gender",
+            "heterosexual",
+            "homosexual_gay_or_lesbian",
+            "bisexual",
+            "other_sexual_orientation",
+            "christian",
+            "jewish",
+            "muslim",
+            "hindu",
+            "buddhist",
+            "atheist",
+            "other_religion",
+            "black",
+            "white",
+            "asian",
+            "latino",
+            "other_race_or_ethnicity",
+            "physical_disability",
             "intellectual_or_learning_disability",
-            "psychiatric_or_mental_illness", "other_disability",
+            "psychiatric_or_mental_illness",
+            "other_disability",
         ]
         for col in identity_cols:
             if col in df.columns:
@@ -129,17 +145,20 @@ def load_hatexplain(cfg: dict) -> pd.DataFrame:
                 for row in ds[split]:
                     # Majority vote for label
                     from collections import Counter
+
                     label_counts = Counter(row["annotators"]["label"])
                     majority_label = label_counts.most_common(1)[0][0]
                     text = " ".join(row["post_tokens"])
                     # Binarize: 0=normal→0, 1=offensive→1, 2=hatespeech→1
                     binary_label = 0 if majority_label == 0 else 1
-                    records.append({
-                        "text": text,
-                        "label": binary_label,
-                        "original_label": majority_label,
-                        "split": split,
-                    })
+                    records.append(
+                        {
+                            "text": text,
+                            "label": binary_label,
+                            "original_label": majority_label,
+                            "split": split,
+                        }
+                    )
 
         df = pd.DataFrame(records)
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -171,14 +190,12 @@ def prepare_splits(df: pd.DataFrame, cfg: dict):
     val_size = cfg["dataset"].get("val_size", 0.15)
 
     train_df, test_df = train_test_split(
-        df, test_size=test_size, stratify=df["label"],
-        random_state=cfg["seed"]
+        df, test_size=test_size, stratify=df["label"], random_state=cfg["seed"]
     )
     # val_size is relative to the original total, adjust for remaining
     val_relative = val_size / (1 - test_size)
     train_df, val_df = train_test_split(
-        train_df, test_size=val_relative, stratify=train_df["label"],
-        random_state=cfg["seed"]
+        train_df, test_size=val_relative, stratify=train_df["label"], random_state=cfg["seed"]
     )
 
     train_df = train_df.reset_index(drop=True)

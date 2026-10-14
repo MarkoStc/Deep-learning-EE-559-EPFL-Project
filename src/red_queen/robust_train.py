@@ -10,28 +10,37 @@ Usage:
 """
 
 import argparse
-import torch
-import pandas as pd
-import numpy as np
-from torch.utils.data import DataLoader
-from torch.optim import AdamW
-from transformers import get_linear_schedule_with_warmup
-from sklearn.metrics import f1_score
-from pathlib import Path
-from tqdm import tqdm
 
-from red_queen.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
+import numpy as np
+import pandas as pd
+import torch
+from sklearn.metrics import f1_score
+from torch.optim import AdamW
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+from transformers import get_linear_schedule_with_warmup
+
 from red_queen.data_loading import load_and_split
 from red_queen.models import Guardian
+from red_queen.utils import (
+    create_run_dir,
+    get_device,
+    load_config,
+    save_config_snapshot,
+    save_metrics,
+    set_seed,
+)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Robust-retrain Guardian")
     parser.add_argument("--config", type=str, default="configs/default.yaml")
-    parser.add_argument("--guardian_path", type=str, required=True,
-                        help="Path to baseline Guardian checkpoint")
-    parser.add_argument("--stress_cases", type=str, required=True,
-                        help="Path to stress_cases.parquet")
+    parser.add_argument(
+        "--guardian_path", type=str, required=True, help="Path to baseline Guardian checkpoint"
+    )
+    parser.add_argument(
+        "--stress_cases", type=str, required=True, help="Path to stress_cases.parquet"
+    )
     args = parser.parse_args()
 
     cfg = load_config(args.config)
@@ -73,8 +82,10 @@ def main():
 
     combined_texts = train_texts + aug_texts
     combined_labels = train_labels + aug_labels
-    print(f"[INFO] Augmented training set: {len(combined_texts)} "
-          f"(original: {len(train_texts)}, augmented: {len(aug_texts)})")
+    print(
+        f"[INFO] Augmented training set: {len(combined_texts)} "
+        f"(original: {len(train_texts)}, augmented: {len(aug_texts)})"
+    )
 
     # ── Create datasets ──────────────────────────────────────
     train_ds = guardian.make_dataset(combined_texts, combined_labels)
@@ -103,7 +114,7 @@ def main():
         guardian.model.train()
         total_loss = 0
 
-        for batch in tqdm(train_loader, desc=f"Robust epoch {epoch+1}", leave=False):
+        for batch in tqdm(train_loader, desc=f"Robust epoch {epoch + 1}", leave=False):
             batch = {k: v.to(device) for k, v in batch.items()}
             outputs = guardian.model(**batch)
             loss = outputs.loss
@@ -129,7 +140,7 @@ def main():
                 val_labels.extend(batch["labels"].cpu().tolist())
 
         val_f1 = f1_score(val_labels, val_preds, average="macro")
-        print(f"  Robust epoch {epoch+1} — loss: {avg_loss:.4f}, val_macro_f1: {val_f1:.4f}")
+        print(f"  Robust epoch {epoch + 1} — loss: {avg_loss:.4f}, val_macro_f1: {val_f1:.4f}")
 
         history.append({"epoch": epoch + 1, "loss": avg_loss, "val_macro_f1": val_f1})
 

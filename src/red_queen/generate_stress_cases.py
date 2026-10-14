@@ -12,21 +12,27 @@ Usage:
 """
 
 import argparse
-import torch
-import pandas as pd
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import torch
 from tqdm import tqdm
 
-from red_queen.utils import (
-    load_config, set_seed, get_device, save_metrics,
-    safe_log_example, sanitize_text,
-)
 from red_queen.data_loading import load_and_split
-from red_queen.models import Guardian, EvaderNetwork
+from red_queen.models import EvaderNetwork, Guardian
 from red_queen.preprocess import (
-    apply_perturbation, extract_text_features,
-    ACTION_NAMES, NUM_ACTIONS,
+    ACTION_NAMES,
+    NUM_ACTIONS,
+    apply_perturbation,
+    extract_text_features,
+)
+from red_queen.utils import (
+    get_device,
+    load_config,
+    sanitize_text,
+    save_metrics,
+    set_seed,
 )
 
 
@@ -54,13 +60,13 @@ def generate(cfg, guardian_path, evader_path, output_dir):
     batch_size = 64
 
     for i in tqdm(range(0, len(hate_texts), batch_size), desc="Generating"):
-        batch = hate_texts[i:i + batch_size]
+        batch = hate_texts[i : i + batch_size]
 
         # Get Guardian probabilities for features
         probs = guardian.predict_proba(batch)
-        states = np.array([
-            extract_text_features(t, p) for t, p in zip(batch, probs)
-        ], dtype=np.float32)
+        states = np.array(
+            [extract_text_features(t, p) for t, p in zip(batch, probs)], dtype=np.float32
+        )
         state_tensor = torch.tensor(states).to(device)
 
         # Get policy actions (greedy: pick argmax)
@@ -73,17 +79,19 @@ def generate(cfg, guardian_path, evader_path, output_dir):
             perturbed = apply_perturbation(text, action, cfg)
             pred = guardian.predict([perturbed])[0]
 
-            records.append({
-                "original_text": text,
-                "perturbed_text": perturbed,
-                "action": action,
-                "action_name": ACTION_NAMES[action],
-                "original_label": 1,  # all hateful
-                "guardian_pred_original": 1 if prob >= 0.5 else 0,
-                "guardian_pred_perturbed": pred,
-                "attack_success": 1 if pred == 0 else 0,
-                "guardian_hate_prob": prob,
-            })
+            records.append(
+                {
+                    "original_text": text,
+                    "perturbed_text": perturbed,
+                    "action": action,
+                    "action_name": ACTION_NAMES[action],
+                    "original_label": 1,  # all hateful
+                    "guardian_pred_original": 1 if prob >= 0.5 else 0,
+                    "guardian_pred_perturbed": pred,
+                    "attack_success": 1 if pred == 0 else 0,
+                    "guardian_hate_prob": prob,
+                }
+            )
 
     df = pd.DataFrame(records)
 
@@ -93,7 +101,7 @@ def generate(cfg, guardian_path, evader_path, output_dir):
     action_counts = df["action_name"].value_counts(normalize=True).to_dict()
 
     print(f"\n[RESULTS] Overall Attack Success Rate: {asr:.4f}")
-    print(f"[RESULTS] ASR by action:")
+    print("[RESULTS] ASR by action:")
     for name, rate in sorted(asr_by_action.items(), key=lambda x: -x[1]):
         print(f"  {name:15s}: {rate:.4f}")
 
@@ -109,22 +117,35 @@ def generate(cfg, guardian_path, evader_path, output_dir):
     # Also save a small sanitized sample as CSV for easy viewing
     sample = df.head(100)
     if sanitize:
-        cols = ["original_text_display", "perturbed_text_display",
-                "action_name", "attack_success", "guardian_hate_prob"]
+        cols = [
+            "original_text_display",
+            "perturbed_text_display",
+            "action_name",
+            "attack_success",
+            "guardian_hate_prob",
+        ]
     else:
-        cols = ["original_text", "perturbed_text",
-                "action_name", "attack_success", "guardian_hate_prob"]
+        cols = [
+            "original_text",
+            "perturbed_text",
+            "action_name",
+            "attack_success",
+            "guardian_hate_prob",
+        ]
     sample[[c for c in cols if c in sample.columns]].to_csv(
         output_dir / "stress_cases_sample.csv", index=False
     )
 
-    save_metrics({
-        "overall_asr": asr,
-        "asr_by_action": asr_by_action,
-        "action_distribution": action_counts,
-        "total_cases": len(df),
-        "successful_attacks": int(df["attack_success"].sum()),
-    }, output_dir / "stress_case_metrics.json")
+    save_metrics(
+        {
+            "overall_asr": asr,
+            "asr_by_action": asr_by_action,
+            "action_distribution": action_counts,
+            "total_cases": len(df),
+            "successful_attacks": int(df["attack_success"].sum()),
+        },
+        output_dir / "stress_case_metrics.json",
+    )
 
     print(f"[INFO] Stress cases saved to {output_dir}")
     return df

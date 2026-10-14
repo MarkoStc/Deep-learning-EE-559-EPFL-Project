@@ -2,27 +2,28 @@
 Utility functions: config loading, seeding, logging, text sanitization.
 """
 
-import os
-import re
 import json
 import random
-import yaml
-import torch
-import numpy as np
-from pathlib import Path
+import re
 from datetime import datetime
+from pathlib import Path
 
+import numpy as np
+import torch
+import yaml
 
 # ── Config ──────────────────────────────────────────────────
 
+
 def load_config(path: str = "configs/default.yaml") -> dict:
     """Load YAML config and return as nested dict."""
-    with open(path, "r") as f:
+    with open(path) as f:
         cfg = yaml.safe_load(f)
     return cfg
 
 
 # ── Seeding ─────────────────────────────────────────────────
+
 
 def set_seed(seed: int):
     """Set all random seeds for reproducibility."""
@@ -35,6 +36,7 @@ def set_seed(seed: int):
 
 
 # ── Device ──────────────────────────────────────────────────
+
 
 def get_device() -> torch.device:
     """Return cuda device if available, else cpu."""
@@ -49,23 +51,19 @@ def get_device() -> torch.device:
 
 # ── Run directory management ────────────────────────────────
 
+
 def create_run_dir(output_dir: str) -> Path:
     """Create an auto-numbered run directory: outputs/run_001, run_002, ..."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    existing = [
-        d for d in output_dir.iterdir()
-        if d.is_dir() and d.name.startswith("run_")
-    ]
+    existing = [d for d in output_dir.iterdir() if d.is_dir() and d.name.startswith("run_")]
     next_num = len(existing) + 1
     run_dir = output_dir / f"run_{next_num:03d}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
     # Save timestamp
-    (run_dir / "timestamp.txt").write_text(
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    )
+    (run_dir / "timestamp.txt").write_text(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     print(f"[INFO] Run directory: {run_dir}")
     return run_dir
 
@@ -94,8 +92,9 @@ def sanitize_text(text: str, mask_char: str = "█") -> str:
     return text
 
 
-def safe_log_example(text: str, label: int, action: str = "",
-                     sanitize: bool = True, mask_char: str = "█") -> str:
+def safe_log_example(
+    text: str, label: int, action: str = "", sanitize: bool = True, mask_char: str = "█"
+) -> str:
     """Format a single example for safe logging."""
     display = sanitize_text(text, mask_char) if sanitize else text
     # Truncate long texts
@@ -110,6 +109,7 @@ def safe_log_example(text: str, label: int, action: str = "",
 
 
 # ── Metrics I/O ─────────────────────────────────────────────
+
 
 def save_metrics(metrics: dict, path: Path):
     """Save metrics dict as JSON."""
