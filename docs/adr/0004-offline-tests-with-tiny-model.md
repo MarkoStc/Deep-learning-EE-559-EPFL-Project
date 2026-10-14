@@ -5,7 +5,7 @@ Date: 2026-10-14. Status: accepted.
 ## Context
 
 The real pipeline downloads Civil Comments (about 1.8 million comments in its train split) and
-DistilBERT, and fine-tunes on a GPU for hours. CI runs on CPU runners and should
+DistilBERT, and fine-tunes on a GPU. CI runs on CPU runners and should
 not depend on the Hugging Face Hub being reachable.
 
 ## Decision
