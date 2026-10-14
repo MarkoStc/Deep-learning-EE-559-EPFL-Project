@@ -30,6 +30,9 @@ cu126 = ["torch>=2.6"]
 tensorboard = ["tensorboard>=2.17"]
 wandb = ["wandb>=0.18"]
 
+[project.scripts]
+red-queen = "red_queen.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",
@@ -75,21 +78,6 @@ target-version = "py311"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-# Legacy modules from the course project. Each refactor branch removes its
-# module from this list when it replaces it; the list must end up empty.
-exclude = [
-    "src/red_queen/data_loading.py",
-    "src/red_queen/evader_env.py",
-    "src/red_queen/evader_policy.py",
-    "src/red_queen/evaluate.py",
-    "src/red_queen/generate_stress_cases.py",
-    "src/red_queen/models.py",
-    "src/red_queen/outer_loop.py",
-    "src/red_queen/preprocess.py",
-    "src/red_queen/robust_train.py",
-    "src/red_queen/train_guardian.py",
-    "src/red_queen/utils.py",
-]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "RUF", "PTH", "PL", "NPY"]
 ignore = [
     "PLR0913",  # ML entry points take many hyperparameters
@@ -107,20 +95,6 @@ plugins = ["pydantic.mypy"]
 # transformers and torch.Tensor.backward ship without full annotations.
 untyped_calls_exclude = ["transformers", "torch._tensor"]
 warn_unreachable = true
-# Same legacy list as ruff; shrinks to nothing during the refactor.
-exclude = [
-    'src/red_queen/data_loading.py$',
-    'src/red_queen/evader_env.py$',
-    'src/red_queen/evader_policy.py$',
-    'src/red_queen/evaluate.py$',
-    'src/red_queen/generate_stress_cases.py$',
-    'src/red_queen/models.py$',
-    'src/red_queen/outer_loop.py$',
-    'src/red_queen/preprocess.py$',
-    'src/red_queen/robust_train.py$',
-    'src/red_queen/train_guardian.py$',
-    'src/red_queen/utils.py$',
-]
 
 [[tool.mypy.overrides]]
 module = ["datasets.*", "sklearn.*", "seaborn.*", "nltk.*", "emoji.*", "transformers.*", "tokenizers.*", "pyarrow.*", "tensorboard.*", "torch.utils.tensorboard.*", "wandb.*"]

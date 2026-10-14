@@ -13,24 +13,12 @@ safe, and reproducible.
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
-uv sync --extra cpu   # or --extra cu126 for CUDA 12.6
-
-# 2. Train the baseline Guardian
-python -m red_queen.train_guardian --config configs/default.yaml
-
-# 3. Train the Evader policy
-python -m red_queen.evader_policy --config configs/default.yaml
-
-# 4. Generate stress-test cases
-python -m red_queen.generate_stress_cases --config configs/default.yaml
-
-# 5. Robust-retrain the Guardian
-python -m red_queen.robust_train --config configs/default.yaml
-
-# 6. Evaluate everything
-python -m red_queen.evaluate --config configs/default.yaml
+uv sync --extra cpu                                   # or --extra cu126 for CUDA 12.6
+uv run red-queen pipeline --config configs/smoke.yaml # one-minute CPU check, synthetic data
+uv run red-queen pipeline                             # full run on Civil Comments
 ```
+
+Single steps: `red-queen train`, then `red-queen evader|stress|robust|evaluate --run-dir runs/<id>`.
 
 ## Project Structure
 
