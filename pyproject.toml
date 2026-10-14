@@ -104,8 +104,8 @@ python_version = "3.11"
 files = ["src"]
 strict = true
 plugins = ["pydantic.mypy"]
-# transformers ships partial annotations; its untyped helpers are fine to call.
-untyped_calls_exclude = ["transformers"]
+# transformers and torch.Tensor.backward ship without full annotations.
+untyped_calls_exclude = ["transformers", "torch._tensor"]
 warn_unreachable = true
 # Same legacy list as ruff; shrinks to nothing during the refactor.
 exclude = [
