@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 from collections.abc import Sequence
 from enum import StrEnum
 from functools import cached_property
@@ -146,7 +147,12 @@ class Pipeline:
         trainer = GuardianTrainer(
             guardian, schedule, seed=self.cfg.seed, stage=stage, tracker=self.tracker
         )
-        result = trainer.fit(train, labelled(self.splits.val), out_dir / "best", self.cfg)
+        resume_dir = out_dir / "last"
+        result = trainer.fit(
+            train, labelled(self.splits.val), out_dir / "best", self.cfg, resume_dir
+        )
+        if not self.cfg.guardian.keep_resume_state:
+            shutil.rmtree(resume_dir, ignore_errors=True)
         write_json(out_dir / "metrics.json", result.to_dict())
         epochs = [h.epoch for h in result.history]
         plots.line_panels(

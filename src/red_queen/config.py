@@ -100,6 +100,8 @@ class GuardianConfig(_Section):
     epochs: int = Field(3, gt=0)
     warmup_ratio: float = Field(0.1, ge=0, lt=1)
     grad_clip_norm: float = Field(1.0, gt=0)
+    keep_resume_state: bool = False
+    """Keep ``<stage>/last`` (model + optimizer state) after training finishes."""
 
     def schedule(self) -> TrainSchedule:
         return TrainSchedule(
