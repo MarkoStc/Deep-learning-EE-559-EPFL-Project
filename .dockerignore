@@ -1,0 +1,19 @@
+# Only what the image build needs: pyproject.toml, uv.lock, README.md, src/, configs/.
+.git
+.github
+.venv
+**/__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+coverage.xml
+htmlcov
+outputs
+runs
+data
+tests
+docs
+scripts
+*.local.md
+.env
