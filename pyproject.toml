@@ -40,6 +40,7 @@ dev = [
     "pip-audit>=2.7",
     "types-PyYAML>=6.0",
     "pandas-stubs>=2.2",
+    "types-tqdm>=4.66",
 ]
 
 [build-system]
@@ -103,6 +104,8 @@ python_version = "3.11"
 files = ["src"]
 strict = true
 plugins = ["pydantic.mypy"]
+# transformers ships partial annotations; its untyped helpers are fine to call.
+untyped_calls_exclude = ["transformers"]
 warn_unreachable = true
 # Same legacy list as ruff; shrinks to nothing during the refactor.
 exclude = [
