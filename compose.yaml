@@ -1,0 +1,36 @@
+# `docker compose run --rm red-queen pipeline --config configs/smoke.yaml`
+# Runs, the dataset cache and the Hugging Face cache live on the host.
+services:
+  red-queen:
+    build:
+      context: .
+      target: cpu
+    image: red-queen:cpu
+    volumes:
+      - ./runs:/app/runs
+      - ./data:/app/data
+      - hf-cache:/app/.cache
+    env_file:
+      - path: .env
+        required: false
+
+  red-queen-cuda:
+    build:
+      context: .
+      target: cuda
+    image: red-queen:cuda
+    profiles: [cuda]
+    volumes:
+      - ./runs:/app/runs
+      - ./data:/app/data
+      - hf-cache:/app/.cache
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  hf-cache:

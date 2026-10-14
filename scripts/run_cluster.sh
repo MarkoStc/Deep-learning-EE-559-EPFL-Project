@@ -1,109 +1,41 @@
-#!/bin/bash
-# ===================================================================
-# RunAI submission script for EPFL RCP cluster.
-# Run this ON THE CLUSTER (after ssh rcp), NOT on your laptop.
+#!/usr/bin/env bash
+# Submit one command as a RunAI job on a GPU cluster (written for EPFL RCP).
 #
-# Usage:
-#   bash scripts/run_cluster.sh              # full pipeline
-#   bash scripts/run_cluster.sh train        # Guardian only
-#   bash scripts/run_cluster.sh evader       # Evader only
-#   bash scripts/run_cluster.sh stress       # stress cases only
-#   bash scripts/run_cluster.sh robust       # robust training only
-#   bash scripts/run_cluster.sh eval         # evaluation only
-# ===================================================================
+# Run this on the cluster login node, from the project root:
+#   cp .env.example .env    # then fill in your own values
+#   bash scripts/run_cluster.sh python -m red_queen.train_guardian --config configs/legacy.yaml
+#
+# Everything user-specific comes from the environment or .env, never from this file.
+set -euo pipefail
 
-# ── Fixed cluster settings ───────────────────────────────────
-UID_NUM=309057
-IMAGE="registry.rcp.epfl.ch/ee559/environment-with-packages:latest"
-GPU=1
-PVC="claimname=home,path=/home/mstojano"
-PROJECT_DIR="/home/mstojano/red_queen"
+if [[ -f .env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
 
-# Export HOME and cache dir to avoid the UID/passwd container bug
-ENV_SETUP="export HOME=/home/mstojano; export TORCHINDUCTOR_CACHE_DIR=/home/mstojano/.torchinductor-cache; cd ${PROJECT_DIR}"
+: "${RUNAI_UID:?set RUNAI_UID (your numeric cluster user id) in .env}"
+: "${RUNAI_IMAGE:?set RUNAI_IMAGE in .env}"
+: "${RUNAI_PVC_CLAIM:?set RUNAI_PVC_CLAIM in .env}"
+: "${CLUSTER_HOME:?set CLUSTER_HOME (home directory on the PVC) in .env}"
+: "${CLUSTER_PROJECT_DIR:?set CLUSTER_PROJECT_DIR in .env}"
+RUNAI_GPU="${RUNAI_GPU:-1}"
 
-# ── Select which step to run ─────────────────────────────────
-STEP="${1:-full}"
+if [[ $# -eq 0 ]]; then
+  echo "usage: bash scripts/run_cluster.sh <command> [args...]" >&2
+  exit 2
+fi
 
-case $STEP in
+# HOME and the inductor cache must point at the PVC: the container user has no passwd entry.
+setup="export HOME=${CLUSTER_HOME}; export TORCHINDUCTOR_CACHE_DIR=${CLUSTER_HOME}/.torchinductor-cache"
+setup="${setup}; cd ${CLUSTER_PROJECT_DIR}; pip install --break-system-packages -q -e ."
 
-  train)
-    echo "Submitting: Guardian training"
-    runai submit \
-      --run-as-uid $UID_NUM \
-      --image $IMAGE \
-      --gpu $GPU \
-      --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.train_guardian --config configs/default.yaml"
-    ;;
+runai submit \
+  --run-as-uid "${RUNAI_UID}" \
+  --image "${RUNAI_IMAGE}" \
+  --gpu "${RUNAI_GPU}" \
+  --existing-pvc "claimname=${RUNAI_PVC_CLAIM},path=${CLUSTER_HOME}" \
+  --command -- bash -lc "${setup}; $(printf '%q ' "$@")"
 
-  evader)
-    # IMPORTANT: Update GUARDIAN_PATH to your actual run directory
-    GUARDIAN_PATH="outputs/run_001/guardian_best"
-    echo "Submitting: Evader training"
-    runai submit \
-      --run-as-uid $UID_NUM \
-      --image $IMAGE \
-      --gpu $GPU \
-      --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.evader_policy --config configs/default.yaml --guardian_path ${GUARDIAN_PATH}"
-    ;;
-
-  stress)
-    GUARDIAN_PATH="outputs/run_001/guardian_best"
-    EVADER_PATH="outputs/run_002/evader_policy.pt"
-    echo "Submitting: Generate stress cases"
-    runai submit \
-      --run-as-uid $UID_NUM \
-      --image $IMAGE \
-      --gpu $GPU \
-      --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.generate_stress_cases --config configs/default.yaml --guardian_path ${GUARDIAN_PATH} --evader_path ${EVADER_PATH} --output_dir outputs/stress_cases"
-    ;;
-
-  robust)
-    GUARDIAN_PATH="outputs/run_001/guardian_best"
-    STRESS_CASES="outputs/stress_cases/stress_cases.parquet"
-    echo "Submitting: Robust retraining"
-    runai submit \
-      --run-as-uid $UID_NUM \
-      --image $IMAGE \
-      --gpu $GPU \
-      --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.robust_train --config configs/default.yaml --guardian_path ${GUARDIAN_PATH} --stress_cases ${STRESS_CASES}"
-    ;;
-
-  eval)
-    BASELINE="outputs/run_001/guardian_best"
-    ROBUST="outputs/run_003/guardian_robust"
-    STRESS="outputs/stress_cases/stress_cases.parquet"
-    echo "Submitting: Evaluation"
-    runai submit \
-      --run-as-uid $UID_NUM \
-      --image $IMAGE \
-      --gpu $GPU \
-      --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.evaluate --config configs/default.yaml --baseline_path ${BASELINE} --robust_path ${ROBUST} --stress_cases ${STRESS} --output_dir outputs/evaluation"
-    ;;
-
-  full)
-    echo "Submitting: Full pipeline"
-    runai submit \
-      --run-as-uid $UID_NUM \
-      --image $IMAGE \
-      --gpu $GPU \
-      --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; bash scripts/run_full_pipeline.sh"
-    ;;
-
-  *)
-    echo "Unknown step: $STEP"
-    echo "Usage: bash scripts/run_cluster.sh [train|evader|stress|robust|eval|full]"
-    exit 1
-    ;;
-esac
-
-echo ""
-echo "Job submitted. Check status with:"
-echo "  runai list"
-echo "  runai logs <job-name>"
+echo "Submitted. Follow with: runai list && runai logs <job-name> -f"

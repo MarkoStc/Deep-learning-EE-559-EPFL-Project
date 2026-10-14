@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      ml-stack:
+        patterns: ["torch", "transformers", "datasets", "tokenizers", "safetensors"]
+      dev-tools:
+        patterns: ["ruff", "mypy", "pytest*", "pre-commit", "pip-audit", "types-*", "pandas-stubs"]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

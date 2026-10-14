@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_LOCKED: "1"            # fail if uv.lock is out of date with pyproject.toml
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  lint:
+    name: Lint and type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --extra cpu --extra tensorboard
+      - run: uv run ruff check --output-format=github .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: ${{ matrix.python }}
+      - run: uv sync --extra cpu --extra tensorboard
+      - name: Unit tests
+        run: uv run pytest -m "not slow" --cov --cov-report=term --cov-report=xml
+      - name: End-to-end pipeline tests (tiny model, synthetic data)
+        if: matrix.python == '3.12'
+        run: uv run pytest -m slow --cov --cov-append --cov-report=term --cov-report=xml
+      - uses: actions/upload-artifact@v4
+        if: matrix.python == '3.12'
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+  smoke:
+    name: CLI smoke run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --extra cpu
+      - name: Full pipeline on synthetic data
+        run: uv run red-queen --log-format json pipeline --config configs/smoke.yaml
+      - name: Arms race on the same run
+        run: uv run red-queen arms-race --run-dir "$(ls -d runs/*-pipeline | head -n1)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-run
+          path: |
+            runs/*/evaluation
+            runs/*/arms_race/*.csv
+            runs/*/arms_race/*.png
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      # The CPU torch wheel ("2.14.1+cpu") is not on PyPI; audit the same release by its
+      # public version so --strict does not fail on an un-auditable package.
+      - run: |
+          uv export --no-hashes --extra cpu --no-emit-project -o requirements-audit.txt
+          sed -i 's/+cpu//' requirements-audit.txt
+      # GHSA-8mgp-746c-j5xp (nltk): affects TransitionParser / AveragedPerceptron model
+      # save/load only. This project only reads the WordNet corpus. No fixed release yet.
+      - run: >
+          uvx pip-audit --strict --no-deps --disable-pip -r requirements-audit.txt
+          --ignore-vuln GHSA-8mgp-746c-j5xp
+
+  docker:
+    name: Docker image (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [cpu, cuda]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          tags: red-queen:${{ matrix.target }}
+          load: true
+          push: false
+          cache-from: type=gha,scope=${{ matrix.target }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}
+      - name: Image runs as non-root and starts
+        run: |
+          test "$(docker run --rm --entrypoint id red-queen:${{ matrix.target }} -u)" = "10001"
+          docker run --rm red-queen:${{ matrix.target }} --version
+      - name: Smoke pipeline inside the CPU image
+        if: matrix.target == 'cpu'
+        run: |
+          mkdir -p runs && chmod 777 runs
+          docker run --rm -v "$PWD/runs:/app/runs" red-queen:cpu pipeline --config configs/smoke.yaml
+          ls runs/*/evaluation/summary_table.csv
+      - name: Image size
+        run: docker image ls red-queen

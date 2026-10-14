@@ -1,70 +1,81 @@
-# ============================================================
-# Red Queen Moderation — Default Configuration
-# ============================================================
+# Red Queen Moderation: default experiment.
+# Every key is validated by red_queen.config.AppConfig; unknown keys are errors.
+# Override any value from the CLI, e.g. `--set guardian.epochs=1`.
 
 seed: 42
+deterministic: true          # cuDNN deterministic kernels, no benchmark autotuning
+device: auto                 # auto | cpu | cuda
 
-# --- Paths ---
-data_dir: "data"
-output_dir: "outputs"
-checkpoint_dir: "outputs/checkpoints"
+paths:
+  data_dir: data             # parquet cache of downloaded datasets
+  runs_dir: runs             # one sub-directory per run (git-ignored)
 
-# --- Dataset ---
+hub:                         # Hugging Face Hub downloads
+  download_attempts: 4
+  backoff_base_s: 2.0
+  backoff_max_s: 60.0
+  timeout_s: 60
+
 dataset:
-  name: "civil_comments"            # "civil_comments" | "hatexplain"
-  max_samples: 50000                 # subsample for speed; null = use all
+  name: civil_comments       # civil_comments | hatexplain | synthetic
+  max_samples: 50000         # stratified subsample; null = full dataset
   test_size: 0.15
   val_size: 0.15
-  toxicity_threshold: 0.5           # for civil_comments binarization
+  toxicity_threshold: 0.5    # Civil Comments: toxicity >= threshold means hate
 
-# --- Guardian (classifier) ---
-guardian:
-  model_name: "distilbert-base-uncased"
+guardian:                    # DistilBERT classifier under attack
+  model_name: distilbert-base-uncased
+  tiny: null                 # set a mapping to build a tiny random model offline
   max_length: 128
   batch_size: 32
+  eval_batch_size: 128
   learning_rate: 2.0e-5
   weight_decay: 0.01
   epochs: 3
   warmup_ratio: 0.1
-  num_labels: 2
+  grad_clip_norm: 1.0
+  keep_resume_state: false  # per-epoch resume state is deleted once training finishes
 
-# --- Evader (RL agent) ---
-evader:
-  state_dim: 8                       # text feature vector dimension
-  num_actions: 7                     # noop + 6 perturbation types
+robust:                      # retraining on train data + stress cases
+  augmentation_ratio: 0.5    # share of stress cases mixed into the train set
+  epochs: 2
+  learning_rate: 1.0e-5
+  warmup_ratio: 0.0
+
+evader:                      # REINFORCE contextual bandit
   hidden_dim: 64
   learning_rate: 1.0e-3
-  episodes: 2000                     # number of bandit episodes
-  batch_size: 64                     # texts per episode
-  gamma: 1.0                         # bandit = no discounting
-  entropy_coeff: 0.01                # exploration bonus
-  baseline_decay: 0.99               # running mean baseline
+  episodes: 2000
+  batch_size: 64             # texts per episode
+  min_batch_size: 16
+  entropy_coeff: 0.01
+  baseline_decay: 0.99       # running-mean reward baseline
+  grad_clip_norm: 1.0
+  log_every: 50
 
-# --- Perturbation ---
 perturbation:
-  typo_prob: 0.3                     # per-word probability of typo
-  leet_prob: 0.4
-  homoglyph_prob: 0.3
+  typo_prob: 0.3             # per word
+  leet_prob: 0.4             # per character
+  whitespace_prob: 0.3       # per word
+  homoglyph_prob: 0.3        # per character
   synonym_max_replacements: 2
+  synonym_max_synsets: 3
   emoji_insert_count: 1
 
-# --- Robust Training ---
-robust:
-  augmentation_ratio: 0.5            # fraction of stress cases to mix in
-  epochs: 2
-  learning_rate: 1.0e-5              # lower LR for fine-tuning
+stress:
+  batch_size: 64
 
-# --- Evaluation ---
-eval:
-  sanitize_logs: true                # mask hateful words in printed examples
-  max_display_examples: 10
+evaluation:
+  sanitize_logs: true        # mask slurs in logged examples
   mask_char: "█"
+  max_display_examples: 10
+  identity_threshold: 0.5
+  min_subgroup_size: 10
 
-# --- Cluster (EPFL RCP) ---
-cluster:
-  uid: 309057
-  image: "registry.rcp.epfl.ch/ee559/environment-with-packages:latest"
-  gpu: 1
-  pvc_claim: "home"
-  pvc_path: "/home/mstojano"
-  project_path: "/home/mstojano/red_queen"
+outer_loop:
+  num_rounds: 5
+
+tracking:
+  csv: true
+  tensorboard: false
+  wandb: false
