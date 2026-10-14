@@ -17,6 +17,7 @@ dependencies = [
     "matplotlib>=3.9",
     "seaborn>=0.13",
     "pyyaml>=6.0",
+    "pydantic>=2.8",
     "nltk>=3.9",
     "emoji>=2.12",
     "tqdm>=4.66",
@@ -98,6 +99,7 @@ ignore = [
 python_version = "3.11"
 files = ["src"]
 strict = true
+plugins = ["pydantic.mypy"]
 warn_unreachable = true
 # Same legacy list as ruff; shrinks to nothing during the refactor.
 exclude = [
@@ -130,3 +132,8 @@ branch = true
 [tool.coverage.report]
 show_missing = true
 skip_covered = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true

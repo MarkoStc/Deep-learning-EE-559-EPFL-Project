@@ -12,7 +12,7 @@ The first Guardian (round 0) must already be trained.
 
 Usage:
     python -m red_queen.outer_loop \
-        --config configs/default.yaml \
+        --config configs/legacy.yaml \
         --initial_guardian outputs/run_029/guardian_best \
         --num_rounds 5 \
         --output_dir outputs/arms_race
@@ -221,7 +221,7 @@ def robust_retrain(guardian, train_texts, train_labels, stress_df, cfg, device, 
 
 def main():
     parser = argparse.ArgumentParser(description="Red Queen Outer Loop")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/legacy.yaml")
     parser.add_argument(
         "--initial_guardian",
         type=str,

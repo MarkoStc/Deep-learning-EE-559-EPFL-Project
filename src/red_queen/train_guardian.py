@@ -1,7 +1,7 @@
 """
 Train the baseline Guardian (DistilBERT hate speech classifier).
 Usage:
-    python -m red_queen.train_guardian --config configs/default.yaml
+    python -m red_queen.train_guardian --config configs/legacy.yaml
 """
 
 import argparse
@@ -72,7 +72,7 @@ def evaluate(guardian, dataloader, device):
 
 def main():
     parser = argparse.ArgumentParser(description="Train baseline Guardian")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/legacy.yaml")
     args = parser.parse_args()
 
     cfg = load_config(args.config)

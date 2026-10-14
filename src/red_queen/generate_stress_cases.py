@@ -5,7 +5,7 @@ perturbed texts that fool the Guardian.
 
 Usage:
     python -m red_queen.generate_stress_cases \
-        --config configs/default.yaml \
+        --config configs/legacy.yaml \
         --guardian_path outputs/run_001/guardian_best \
         --evader_path outputs/run_002/evader_policy.pt \
         --output_dir outputs/stress_cases
@@ -153,7 +153,7 @@ def generate(cfg, guardian_path, evader_path, output_dir):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate stress-test cases")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/legacy.yaml")
     parser.add_argument("--guardian_path", type=str, required=True)
     parser.add_argument("--evader_path", type=str, required=True)
     parser.add_argument("--output_dir", type=str, default="outputs/stress_cases")

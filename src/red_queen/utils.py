@@ -15,7 +15,7 @@ import yaml
 # ── Config ──────────────────────────────────────────────────
 
 
-def load_config(path: str = "configs/default.yaml") -> dict:
+def load_config(path: str = "configs/legacy.yaml") -> dict:
     """Load YAML config and return as nested dict."""
     with open(path) as f:
         cfg = yaml.safe_load(f)

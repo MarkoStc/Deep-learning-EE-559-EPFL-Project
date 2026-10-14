@@ -5,7 +5,7 @@
 set -e
 
 echo "=== Training Baseline Guardian ==="
-python -m red_queen.train_guardian --config configs/default.yaml
+python -m red_queen.train_guardian --config configs/legacy.yaml
 
 echo ""
 echo "Done. Check outputs/ for the latest run directory."
