@@ -62,3 +62,11 @@ red_queen/
 
 ## License
 Academic use only — EPFL EE-559 course project.
+
+## Docker
+
+```bash
+docker build --target cpu -t red-queen:cpu .
+docker run --rm -v "$PWD/runs:/app/runs" red-queen:cpu pipeline --config configs/smoke.yaml
+docker build --target cuda -t red-queen:cuda .     # CUDA 12.6; run with --gpus all
+```
