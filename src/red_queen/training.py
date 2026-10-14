@@ -11,7 +11,8 @@ from __future__ import annotations
 
 import logging
 import random
-from collections.abc import Sequence
+import time
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -31,6 +32,25 @@ from red_queen.tracking import NullTracker, Tracker
 log = logging.getLogger(__name__)
 
 RESUME_FILE = "trainer_state.pt"
+REPLACE_ATTEMPTS = 5
+REPLACE_BACKOFF_S = 0.2
+
+
+def replace_with_retry(src: Path, dst: Path, sleep: Callable[[float], None] = time.sleep) -> None:
+    """Atomically move ``src`` over ``dst``.
+
+    On Windows a virus scanner or the search indexer can hold a freshly written
+    file open for a moment, and the rename fails with PermissionError. Retry a
+    few times with a growing pause before giving up.
+    """
+    for attempt in range(1, REPLACE_ATTEMPTS + 1):
+        try:
+            src.replace(dst)
+            return
+        except PermissionError:
+            if attempt == REPLACE_ATTEMPTS:
+                raise
+            sleep(REPLACE_BACKOFF_S * attempt)
 
 
 @dataclass(frozen=True)
@@ -170,7 +190,7 @@ class GuardianTrainer:
         }
         tmp = resume_dir / f"{RESUME_FILE}.tmp"
         torch.save(state, tmp)
-        tmp.replace(resume_dir / RESUME_FILE)  # atomic: a crash mid-save keeps the old state
+        replace_with_retry(tmp, resume_dir / RESUME_FILE)  # a crash mid-save keeps the old state
 
     def _load_state(
         self,

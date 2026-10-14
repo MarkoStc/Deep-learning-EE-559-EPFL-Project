@@ -8,7 +8,14 @@ import torch
 from red_queen.config import AppConfig
 from red_queen.data import DataSplits, load_splits
 from red_queen.guardian import Guardian
-from red_queen.training import RESUME_FILE, FitResult, GuardianTrainer, LabelledTexts
+from red_queen.training import (
+    REPLACE_ATTEMPTS,
+    RESUME_FILE,
+    FitResult,
+    GuardianTrainer,
+    LabelledTexts,
+    replace_with_retry,
+)
 
 CPU = torch.device("cpu")
 
@@ -61,3 +68,35 @@ def test_finished_state_is_not_retrained(tiny_config: AppConfig, tmp_path: Path)
     first = _fit(tiny_config, splits, tmp_path)
     again = _fit(tiny_config, splits, tmp_path)
     assert again.history == first.history
+
+
+def test_replace_retries_while_file_is_locked(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    src, dst = tmp_path / "a.tmp", tmp_path / "a"
+    src.write_text("new")
+    dst.write_text("old")
+    real_replace = Path.replace
+    failures = iter([True, True, False])
+
+    def flaky(self: Path, target: Path) -> Path:
+        if next(failures):
+            raise PermissionError("locked by another process")
+        return real_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", flaky)
+    pauses: list[float] = []
+    replace_with_retry(src, dst, sleep=pauses.append)
+    assert dst.read_text() == "new"
+    assert len(pauses) == 2
+
+
+def test_replace_gives_up_after_attempts(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def locked(self: Path, target: Path) -> Path:
+        raise PermissionError("locked")
+
+    monkeypatch.setattr(Path, "replace", locked)
+    pauses: list[float] = []
+    with pytest.raises(PermissionError):
+        replace_with_retry(tmp_path / "a", tmp_path / "b", sleep=pauses.append)
+    assert len(pauses) == REPLACE_ATTEMPTS - 1
