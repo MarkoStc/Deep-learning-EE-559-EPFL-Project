@@ -2,10 +2,10 @@ checkpoint_dir: outputs/checkpoints
 cluster:
   gpu: 1
   image: registry.rcp.epfl.ch/ee559/environment-with-packages:latest
-  project_path: /home/mstojano/red_queen
+  project_path: REDACTED
   pvc_claim: home
-  pvc_path: /home/mstojano
-  uid: 309057
+  pvc_path: REDACTED
+  uid: REDACTED
 data_dir: data
 dataset:
   max_samples: 50000
