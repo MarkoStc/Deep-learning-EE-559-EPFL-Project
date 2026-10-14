@@ -1,7 +1,7 @@
 """
 Train the Evader policy using REINFORCE (contextual bandit).
 Usage:
-    python -m red_queen.evader_policy --config configs/default.yaml --guardian_path outputs/run_001/guardian_best
+    python -m red_queen.evader_policy --config configs/legacy.yaml --guardian_path outputs/run_001/guardian_best
 """
 
 import argparse
@@ -154,7 +154,7 @@ def train_evader(cfg: dict, guardian_path: str, run_dir: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Train Evader policy")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/legacy.yaml")
     parser.add_argument(
         "--guardian_path", type=str, required=True, help="Path to trained Guardian checkpoint"
     )

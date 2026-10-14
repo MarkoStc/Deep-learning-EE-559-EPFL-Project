@@ -4,7 +4,7 @@ and stressed test sets. Produces metrics, confusion matrices, plots.
 
 Usage:
     python -m red_queen.evaluate \
-        --config configs/default.yaml \
+        --config configs/legacy.yaml \
         --baseline_path outputs/run_001/guardian_best \
         --robust_path outputs/run_003/guardian_robust \
         --stress_cases outputs/stress_cases/stress_cases.parquet \
@@ -223,7 +223,7 @@ def plot_fairness(fairness_baseline, fairness_robust, path):
 
 def main():
     parser = argparse.ArgumentParser(description="Full evaluation pipeline")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/legacy.yaml")
     parser.add_argument("--baseline_path", type=str, required=True)
     parser.add_argument(
         "--robust_path", type=str, default=None, help="Path to robust Guardian (optional)"

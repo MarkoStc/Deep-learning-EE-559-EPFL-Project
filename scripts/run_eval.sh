@@ -4,7 +4,7 @@
 
 set -e
 
-CONFIG="configs/default.yaml"
+CONFIG="configs/legacy.yaml"
 BASELINE="outputs/run_001/guardian_best"
 ROBUST="outputs/run_003/guardian_robust"
 STRESS="outputs/stress_cases/stress_cases.parquet"

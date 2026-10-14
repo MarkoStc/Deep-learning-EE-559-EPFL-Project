@@ -6,7 +6,7 @@
 set -e
 
 # ── Configuration ────────────────────────────────────────────
-CONFIG="configs/default.yaml"
+CONFIG="configs/legacy.yaml"
 
 # These paths will be created by each step. Update if your run numbers differ.
 GUARDIAN_RUN="outputs/run_001"

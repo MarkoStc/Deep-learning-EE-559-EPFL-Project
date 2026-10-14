@@ -3,7 +3,7 @@
 #
 # Run this on the cluster login node, from the project root:
 #   cp .env.example .env    # then fill in your own values
-#   bash scripts/run_cluster.sh python -m red_queen.train_guardian --config configs/default.yaml
+#   bash scripts/run_cluster.sh python -m red_queen.train_guardian --config configs/legacy.yaml
 #
 # Everything user-specific comes from the environment or .env, never from this file.
 set -euo pipefail

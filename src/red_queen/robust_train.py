@@ -4,7 +4,7 @@ with stress cases discovered by the Evader.
 
 Usage:
     python -m red_queen.robust_train \
-        --config configs/default.yaml \
+        --config configs/legacy.yaml \
         --guardian_path outputs/run_001/guardian_best \
         --stress_cases outputs/stress_cases/stress_cases.parquet
 """
@@ -34,7 +34,7 @@ from red_queen.utils import (
 
 def main():
     parser = argparse.ArgumentParser(description="Robust-retrain Guardian")
-    parser.add_argument("--config", type=str, default="configs/default.yaml")
+    parser.add_argument("--config", type=str, default="configs/legacy.yaml")
     parser.add_argument(
         "--guardian_path", type=str, required=True, help="Path to baseline Guardian checkpoint"
     )

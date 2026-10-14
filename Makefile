@@ -1,7 +1,7 @@
 # Red Queen Moderation — Makefile
 # Usage: make <target>
 
-CONFIG = configs/default.yaml
+CONFIG = configs/legacy.yaml
 
 # ── Update these after each step creates its run dir ──────────
 GUARDIAN_RUN   = outputs/run_001
