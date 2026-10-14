@@ -51,7 +51,7 @@ jobs:
       - name: End-to-end pipeline tests (tiny model, synthetic data)
         if: matrix.python == '3.12'
         run: uv run pytest -m slow --cov --cov-append --cov-report=term --cov-report=xml
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: matrix.python == '3.12'
         with:
           name: coverage-xml
@@ -71,7 +71,7 @@ jobs:
         run: uv run red-queen --log-format json pipeline --config configs/smoke.yaml
       - name: Arms race on the same run
         run: uv run red-queen arms-race --run-dir "$(ls -d runs/*-pipeline | head -n1)"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: smoke-run
           path: |
