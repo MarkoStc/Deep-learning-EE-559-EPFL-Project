@@ -1,64 +1,60 @@
-# Red Queen Moderation — Makefile
-# Usage: make <target>
+# Red Queen Moderation. Run `make help` for targets.
+# Every target goes through uv, so no virtualenv activation is needed.
 
-CONFIG = configs/legacy.yaml
+CONFIG ?= configs/default.yaml
+RUN ?=
+TORCH ?= cpu
+IMAGE ?= red-queen
+RUN_ARG = $(if $(RUN),--run-dir $(RUN),)
 
-# ── Update these after each step creates its run dir ──────────
-GUARDIAN_RUN   = outputs/run_001
-EVADER_RUN     = outputs/run_002
-ROBUST_RUN     = outputs/run_003
-STRESS_DIR     = outputs/stress_cases
-EVAL_DIR       = outputs/evaluation
+.DEFAULT_GOAL := help
+.PHONY: help install lint format typecheck test test-fast coverage audit check smoke run arms-race docker-build docker-build-cuda clean
 
-GUARDIAN_PATH  = $(GUARDIAN_RUN)/guardian_best
-EVADER_PATH    = $(EVADER_RUN)/evader_policy.pt
-ROBUST_PATH    = $(ROBUST_RUN)/guardian_robust
-STRESS_FILE    = $(STRESS_DIR)/stress_cases.parquet
+help:  ## list targets
+	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-18s %s\n", $$1, $$2}'
 
-.PHONY: install train evader stress robust eval all clean help
+install:  ## install deps and dev tools (TORCH=cpu or TORCH=cu126)
+	uv sync --extra $(TORCH) --extra tensorboard
+	uv run pre-commit install
 
-help:
-	@echo "Targets:"
-	@echo "  install  — install Python dependencies"
-	@echo "  train    — train baseline Guardian"
-	@echo "  evader   — train Evader policy"
-	@echo "  stress   — generate stress-test cases"
-	@echo "  robust   — robust-retrain Guardian"
-	@echo "  eval     — full evaluation + plots"
-	@echo "  all      — run the full pipeline"
-	@echo "  clean    — remove all outputs"
+lint:  ## ruff lint and format check
+	uv run ruff check .
+	uv run ruff format --check .
 
-install:
-	uv sync --extra cpu
-	uv run python -c "import nltk; nltk.download('wordnet', quiet=True); nltk.download('omw-1.4', quiet=True)"
+format:  ## apply ruff fixes and formatting
+	uv run ruff check --fix .
+	uv run ruff format .
 
-train:
-	python -m red_queen.train_guardian --config $(CONFIG)
+typecheck:  ## strict mypy
+	uv run mypy
 
-evader:
-	python -m red_queen.evader_policy --config $(CONFIG) --guardian_path $(GUARDIAN_PATH)
+test:  ## full test suite with coverage
+	uv run pytest --cov --cov-report=term-missing
 
-stress:
-	python -m red_queen.generate_stress_cases --config $(CONFIG) \
-		--guardian_path $(GUARDIAN_PATH) \
-		--evader_path $(EVADER_PATH) \
-		--output_dir $(STRESS_DIR)
+test-fast:  ## tests without the slow end-to-end pipeline
+	uv run pytest -m "not slow"
 
-robust:
-	python -m red_queen.robust_train --config $(CONFIG) \
-		--guardian_path $(GUARDIAN_PATH) \
-		--stress_cases $(STRESS_FILE)
+audit:  ## scan locked dependencies for known vulnerabilities
+	uv export --frozen --no-hashes --extra cpu --no-emit-project -o .audit-requirements.txt
+	uv run pip-audit --strict -r .audit-requirements.txt
+	rm -f .audit-requirements.txt
 
-eval:
-	python -m red_queen.evaluate --config $(CONFIG) \
-		--baseline_path $(GUARDIAN_PATH) \
-		--robust_path $(ROBUST_PATH) \
-		--stress_cases $(STRESS_FILE) \
-		--output_dir $(EVAL_DIR)
+check: lint typecheck test  ## everything CI runs, except Docker
 
-all: train evader stress robust eval
-	@echo "Full pipeline complete. Results in $(EVAL_DIR)/"
+smoke:  ## full pipeline on synthetic data with a tiny model (CPU, about a minute)
+	uv run red-queen pipeline --config configs/smoke.yaml
 
-clean:
-	rm -rf outputs/ data/
-	@echo "Cleaned outputs and data."
+run:  ## full pipeline with CONFIG; continue a run with RUN=runs/<id>
+	uv run red-queen pipeline --config $(CONFIG) $(RUN_ARG)
+
+arms-race:  ## multi-round loop; RUN=runs/<id> reuses that run's Guardian
+	uv run red-queen arms-race --config $(CONFIG) $(RUN_ARG)
+
+docker-build:  ## CPU image
+	docker build --target cpu -t $(IMAGE):cpu .
+
+docker-build-cuda:  ## CUDA 12.6 image
+	docker build --target cuda -t $(IMAGE):cuda .
+
+clean:  ## remove caches (keeps runs/ and data/)
+	rm -rf .pytest_cache .mypy_cache .ruff_cache .coverage coverage.xml htmlcov

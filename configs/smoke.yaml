@@ -1,0 +1,39 @@
+# CPU smoke run: synthetic data and a tiny random DistilBERT, no downloads.
+# Finishes in about a minute on a laptop CPU. The numbers it produces only show
+# that the pipeline runs end to end; they say nothing about hate-speech models.
+
+seed: 0
+device: cpu
+
+dataset:
+  name: synthetic
+  synthetic_size: 400
+  max_samples: null
+
+guardian:
+  tiny:
+    dim: 16
+    n_layers: 1
+    n_heads: 2
+    hidden_dim: 32
+    vocab_size: 120
+  max_length: 24
+  batch_size: 8
+  eval_batch_size: 64
+  learning_rate: 3.0e-3
+  epochs: 6
+  warmup_ratio: 0.0
+
+robust:
+  epochs: 2
+  learning_rate: 1.0e-3
+
+evader:
+  episodes: 60
+  batch_size: 16
+  min_batch_size: 4
+  learning_rate: 0.02
+  log_every: 10
+
+outer_loop:
+  num_rounds: 2
