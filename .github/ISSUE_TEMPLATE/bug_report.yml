@@ -1,0 +1,27 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: Include the exact command and the error output. Mask any hateful text.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `uv run red-queen --version`
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: OS, CPU or GPU (with CUDA version), and the config or `--set` overrides used.
