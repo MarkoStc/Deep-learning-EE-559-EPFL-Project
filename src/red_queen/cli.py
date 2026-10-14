@@ -10,6 +10,8 @@ Examples::
     red-queen pipeline --config configs/smoke.yaml
     red-queen train --set guardian.epochs=1
     red-queen evader --run-dir runs/20261014-120000-pipeline
+    red-queen compare --checkpoint baseline=outputs/run_029/guardian_best \
+        --checkpoint robust=outputs/run_031/guardian_robust --action leetspeak
     red-queen predict --checkpoint runs/<run>/guardian/best "some text"
 """
 
@@ -19,13 +21,14 @@ import argparse
 import json
 import logging
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 from red_queen import __version__
 from red_queen.arms_race import ArmsRace
+from red_queen.compare import Attack, CheckpointComparison
 from red_queen.config import AppConfig, HubConfig, load_config
-from red_queen.errors import RedQueenError
+from red_queen.errors import ConfigError, RedQueenError
 from red_queen.guardian import Guardian
 from red_queen.logging_setup import configure_logging, fields
 from red_queen.pipeline import ALL_STEPS, Pipeline, Step, write_json
@@ -91,6 +94,23 @@ def build_parser() -> argparse.ArgumentParser:
     base = sub.add_parser("baseline", help="per-action brute-force attack on hateful test texts")
     _add_run_options(base)
     base.add_argument("--model", choices=["guardian", "robust"], default="guardian")
+
+    comp = sub.add_parser(
+        "compare", help="score saved checkpoints on clean test and a held-out stress set"
+    )
+    _add_run_options(comp)
+    comp.add_argument(
+        "--checkpoint",
+        dest="checkpoints",
+        action="append",
+        required=True,
+        type=_named_path,
+        metavar="NAME=PATH",
+        help="checkpoint to score (repeatable); the first one is the attack target",
+    )
+    attack = comp.add_mutually_exclusive_group(required=True)
+    attack.add_argument("--policy", type=Path, help="saved evader_policy.pt to attack with")
+    attack.add_argument("--action", help="apply one fixed perturbation, e.g. leetspeak")
 
     pred = sub.add_parser("predict", help="classify texts with a saved Guardian")
     pred.add_argument("--checkpoint", type=Path, required=True)
@@ -161,6 +181,23 @@ def cmd_baseline(args: argparse.Namespace) -> int:
     return 0
 
 
+def _named_path(value: str) -> tuple[str, Path]:
+    name, sep, path = value.partition("=")
+    if not sep or not name or not path:
+        raise argparse.ArgumentTypeError(f"expected NAME=PATH, got {value!r}")
+    return name, Path(path)
+
+
+def cmd_compare(args: argparse.Namespace) -> int:
+    pipeline = open_pipeline(args, "compare")
+    checkpoints = dict(args.checkpoints)
+    if len(checkpoints) != len(args.checkpoints):
+        raise ConfigError("checkpoint names must be unique")
+    out = CheckpointComparison(pipeline).run(checkpoints, Attack(args.policy, args.action))
+    print((out / "summary_table.csv").read_text(encoding="utf-8"))
+    return 0
+
+
 def cmd_predict(args: argparse.Namespace) -> int:
     cfg = load_config(args.config) if args.config else AppConfig()
     guardian = Guardian.from_pretrained(
@@ -184,20 +221,29 @@ def _utf8_stdout() -> None:
         reconfigure(encoding="utf-8", errors="replace")
 
 
+def _single_step(step: Step) -> Callable[[argparse.Namespace], int]:
+    def handler(args: argparse.Namespace) -> int:
+        return cmd_steps(args, [step], args.command)
+
+    return handler
+
+
+HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {
+    "pipeline": lambda args: cmd_steps(args, args.steps, "pipeline"),
+    **{name: _single_step(step) for name, step in SINGLE_STEP_COMMANDS.items()},
+    "arms-race": cmd_arms_race,
+    "compare": cmd_compare,
+    "baseline": cmd_baseline,
+    "predict": cmd_predict,
+}
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     _utf8_stdout()
     args = build_parser().parse_args(argv)
     configure_logging(args.log_level, args.log_format)
     try:
-        if args.command == "pipeline":
-            return cmd_steps(args, args.steps, "pipeline")
-        if args.command in SINGLE_STEP_COMMANDS:
-            return cmd_steps(args, [SINGLE_STEP_COMMANDS[args.command]], args.command)
-        if args.command == "arms-race":
-            return cmd_arms_race(args)
-        if args.command == "baseline":
-            return cmd_baseline(args)
-        return cmd_predict(args)
+        return HANDLERS[args.command](args)
     except RedQueenError as exc:
         log.error("%s", exc)
         return EXIT_EXPECTED_ERROR
