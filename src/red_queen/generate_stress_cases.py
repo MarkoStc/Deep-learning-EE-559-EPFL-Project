@@ -4,7 +4,7 @@ Apply the learned policy to hateful test/val examples and collect
 perturbed texts that fool the Guardian.
 
 Usage:
-    python -m src.generate_stress_cases \
+    python -m red_queen.generate_stress_cases \
         --config configs/default.yaml \
         --guardian_path outputs/run_001/guardian_best \
         --evader_path outputs/run_002/evader_policy.pt \
@@ -18,13 +18,13 @@ import numpy as np
 from pathlib import Path
 from tqdm import tqdm
 
-from src.utils import (
+from red_queen.utils import (
     load_config, set_seed, get_device, save_metrics,
     safe_log_example, sanitize_text,
 )
-from src.data_loading import load_and_split
-from src.models import Guardian, EvaderNetwork
-from src.preprocess import (
+from red_queen.data_loading import load_and_split
+from red_queen.models import Guardian, EvaderNetwork
+from red_queen.preprocess import (
     apply_perturbation, extract_text_features,
     ACTION_NAMES, NUM_ACTIONS,
 )

@@ -20,7 +20,7 @@ runai submit \
   --image registry.rcp.epfl.ch/ee559/environment-with-packages:latest \
   --gpu 1 \
   --existing-pvc claimname=home,path=/home/mstojano \
-  --command -- bash -lc "export HOME=/home/mstojano; export TORCHINDUCTOR_CACHE_DIR=/home/mstojano/.torchinductor-cache; cd /home/mstojano/red_queen; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.outer_loop --config configs/default.yaml --initial_guardian ${GUARDIAN_PATH} --num_rounds ${NUM_ROUNDS} --output_dir outputs/arms_race"
+  --command -- bash -lc "export HOME=/home/mstojano; export TORCHINDUCTOR_CACHE_DIR=/home/mstojano/.torchinductor-cache; cd /home/mstojano/red_queen; pip install --break-system-packages -e . 2>/dev/null; python -m red_queen.outer_loop --config configs/default.yaml --initial_guardian ${GUARDIAN_PATH} --num_rounds ${NUM_ROUNDS} --output_dir outputs/arms_race"
 
 echo ""
 echo "Job submitted. Monitor with:"

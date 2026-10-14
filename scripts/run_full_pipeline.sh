@@ -19,7 +19,7 @@ EVAL_DIR="outputs/evaluation"
 echo "============================================"
 echo "  STEP 1: Train Baseline Guardian"
 echo "============================================"
-python3 -m src.train_guardian --config $CONFIG
+python -m red_queen.train_guardian --config $CONFIG
 GUARDIAN_PATH="${GUARDIAN_RUN}/guardian_best"
 
 # ── Step 2: Train Evader policy ──────────────────────────────
@@ -27,7 +27,7 @@ echo ""
 echo "============================================"
 echo "  STEP 2: Train Evader Policy"
 echo "============================================"
-python3 -m src.evader_policy \
+python -m red_queen.evader_policy \
     --config $CONFIG \
     --guardian_path $GUARDIAN_PATH
 EVADER_PATH="${EVADER_RUN}/evader_policy.pt"
@@ -37,7 +37,7 @@ echo ""
 echo "============================================"
 echo "  STEP 3: Generate Stress Cases"
 echo "============================================"
-python3 -m src.generate_stress_cases \
+python -m red_queen.generate_stress_cases \
     --config $CONFIG \
     --guardian_path $GUARDIAN_PATH \
     --evader_path $EVADER_PATH \
@@ -48,7 +48,7 @@ echo ""
 echo "============================================"
 echo "  STEP 4: Robust Retrain Guardian"
 echo "============================================"
-python3 -m src.robust_train \
+python -m red_queen.robust_train \
     --config $CONFIG \
     --guardian_path $GUARDIAN_PATH \
     --stress_cases "${STRESS_DIR}/stress_cases.parquet"
@@ -59,7 +59,7 @@ echo ""
 echo "============================================"
 echo "  STEP 5: Full Evaluation"
 echo "============================================"
-python3 -m src.evaluate \
+python -m red_queen.evaluate \
     --config $CONFIG \
     --baseline_path $GUARDIAN_PATH \
     --robust_path $ROBUST_PATH \

@@ -3,7 +3,7 @@ Full evaluation pipeline: compare baseline vs robust Guardian on clean
 and stressed test sets. Produces metrics, confusion matrices, plots.
 
 Usage:
-    python -m src.evaluate \
+    python -m red_queen.evaluate \
         --config configs/default.yaml \
         --baseline_path outputs/run_001/guardian_best \
         --robust_path outputs/run_003/guardian_robust \
@@ -26,10 +26,10 @@ from sklearn.metrics import (
     classification_report, confusion_matrix,
 )
 
-from src.utils import load_config, set_seed, get_device, save_metrics
-from src.data_loading import load_and_split
-from src.models import Guardian
-from src.preprocess import apply_perturbation, ACTION_NAMES, NUM_ACTIONS
+from red_queen.utils import load_config, set_seed, get_device, save_metrics
+from red_queen.data_loading import load_and_split
+from red_queen.models import Guardian
+from red_queen.preprocess import apply_perturbation, ACTION_NAMES, NUM_ACTIONS
 
 
 def eval_on_texts(guardian, texts, labels, tag=""):

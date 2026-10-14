@@ -3,7 +3,7 @@ Robust training: retrain the Guardian by augmenting the training set
 with stress cases discovered by the Evader.
 
 Usage:
-    python -m src.robust_train \
+    python -m red_queen.robust_train \
         --config configs/default.yaml \
         --guardian_path outputs/run_001/guardian_best \
         --stress_cases outputs/stress_cases/stress_cases.parquet
@@ -20,9 +20,9 @@ from sklearn.metrics import f1_score
 from pathlib import Path
 from tqdm import tqdm
 
-from src.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
-from src.data_loading import load_and_split
-from src.models import Guardian
+from red_queen.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
+from red_queen.data_loading import load_and_split
+from red_queen.models import Guardian
 
 
 def main():

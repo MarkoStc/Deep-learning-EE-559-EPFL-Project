@@ -24,7 +24,7 @@ echo "============================================"
 # ── Step 2: Train Evader ─────────────────────────────────────
 echo ""
 echo ">>> STEP 2: Training Evader policy..."
-python3 -m src.evader_policy \
+python -m red_queen.evader_policy \
     --config $CONFIG \
     --guardian_path $GUARDIAN_PATH
 
@@ -41,7 +41,7 @@ fi
 # ── Step 3: Generate stress cases ────────────────────────────
 echo ""
 echo ">>> STEP 3: Generating stress cases..."
-python3 -m src.generate_stress_cases \
+python -m red_queen.generate_stress_cases \
     --config $CONFIG \
     --guardian_path $GUARDIAN_PATH \
     --evader_path $EVADER_PATH \
@@ -55,7 +55,7 @@ fi
 # ── Step 4: Robust retrain Guardian ──────────────────────────
 echo ""
 echo ">>> STEP 4: Robust retraining Guardian..."
-python3 -m src.robust_train \
+python -m red_queen.robust_train \
     --config $CONFIG \
     --guardian_path $GUARDIAN_PATH \
     --stress_cases ${STRESS_DIR}/stress_cases.parquet
@@ -72,7 +72,7 @@ fi
 # ── Step 5: Full evaluation ──────────────────────────────────
 echo ""
 echo ">>> STEP 5: Running full evaluation..."
-python3 -m src.evaluate \
+python -m red_queen.evaluate \
     --config $CONFIG \
     --baseline_path $GUARDIAN_PATH \
     --robust_path $ROBUST_PATH \

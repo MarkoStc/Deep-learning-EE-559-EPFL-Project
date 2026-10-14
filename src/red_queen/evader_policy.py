@@ -1,7 +1,7 @@
 """
 Train the Evader policy using REINFORCE (contextual bandit).
 Usage:
-    python -m src.evader_policy --config configs/default.yaml --guardian_path outputs/run_001/guardian_best
+    python -m red_queen.evader_policy --config configs/default.yaml --guardian_path outputs/run_001/guardian_best
 """
 
 import argparse
@@ -12,11 +12,11 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from tqdm import tqdm
 
-from src.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
-from src.data_loading import load_and_split
-from src.models import Guardian, EvaderNetwork
-from src.evader_env import EvaderBanditEnv
-from src.preprocess import ACTION_NAMES, NUM_ACTIONS
+from red_queen.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
+from red_queen.data_loading import load_and_split
+from red_queen.models import Guardian, EvaderNetwork
+from red_queen.evader_env import EvaderBanditEnv
+from red_queen.preprocess import ACTION_NAMES, NUM_ACTIONS
 
 
 def train_evader(cfg: dict, guardian_path: str, run_dir: Path):

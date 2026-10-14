@@ -34,7 +34,7 @@ case $STEP in
       --image $IMAGE \
       --gpu $GPU \
       --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.train_guardian --config configs/default.yaml"
+      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -e . 2>/dev/null; python -m red_queen.train_guardian --config configs/default.yaml"
     ;;
 
   evader)
@@ -46,7 +46,7 @@ case $STEP in
       --image $IMAGE \
       --gpu $GPU \
       --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.evader_policy --config configs/default.yaml --guardian_path ${GUARDIAN_PATH}"
+      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -e . 2>/dev/null; python -m red_queen.evader_policy --config configs/default.yaml --guardian_path ${GUARDIAN_PATH}"
     ;;
 
   stress)
@@ -58,7 +58,7 @@ case $STEP in
       --image $IMAGE \
       --gpu $GPU \
       --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.generate_stress_cases --config configs/default.yaml --guardian_path ${GUARDIAN_PATH} --evader_path ${EVADER_PATH} --output_dir outputs/stress_cases"
+      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -e . 2>/dev/null; python -m red_queen.generate_stress_cases --config configs/default.yaml --guardian_path ${GUARDIAN_PATH} --evader_path ${EVADER_PATH} --output_dir outputs/stress_cases"
     ;;
 
   robust)
@@ -70,7 +70,7 @@ case $STEP in
       --image $IMAGE \
       --gpu $GPU \
       --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.robust_train --config configs/default.yaml --guardian_path ${GUARDIAN_PATH} --stress_cases ${STRESS_CASES}"
+      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -e . 2>/dev/null; python -m red_queen.robust_train --config configs/default.yaml --guardian_path ${GUARDIAN_PATH} --stress_cases ${STRESS_CASES}"
     ;;
 
   eval)
@@ -83,7 +83,7 @@ case $STEP in
       --image $IMAGE \
       --gpu $GPU \
       --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; python3 -m src.evaluate --config configs/default.yaml --baseline_path ${BASELINE} --robust_path ${ROBUST} --stress_cases ${STRESS} --output_dir outputs/evaluation"
+      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -e . 2>/dev/null; python -m red_queen.evaluate --config configs/default.yaml --baseline_path ${BASELINE} --robust_path ${ROBUST} --stress_cases ${STRESS} --output_dir outputs/evaluation"
     ;;
 
   full)
@@ -93,7 +93,7 @@ case $STEP in
       --image $IMAGE \
       --gpu $GPU \
       --existing-pvc $PVC \
-      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -r requirements.txt 2>/dev/null; bash scripts/run_full_pipeline.sh"
+      --command -- bash -lc "${ENV_SETUP}; pip install --break-system-packages -e . 2>/dev/null; bash scripts/run_full_pipeline.sh"
     ;;
 
   *)

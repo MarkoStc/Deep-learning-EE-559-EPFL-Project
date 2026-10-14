@@ -12,7 +12,7 @@ import random
 import numpy as np
 import torch
 
-from src.preprocess import (
+from red_queen.preprocess import (
     apply_perturbation,
     extract_text_features,
     ACTION_NAMES,

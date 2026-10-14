@@ -10,7 +10,7 @@ ROBUST="outputs/run_003/guardian_robust"
 STRESS="outputs/stress_cases/stress_cases.parquet"
 EVAL_DIR="outputs/evaluation"
 
-python3 -m src.evaluate \
+python -m red_queen.evaluate \
     --config $CONFIG \
     --baseline_path $BASELINE \
     --robust_path $ROBUST \

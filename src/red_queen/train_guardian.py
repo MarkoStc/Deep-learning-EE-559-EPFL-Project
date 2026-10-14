@@ -1,7 +1,7 @@
 """
 Train the baseline Guardian (DistilBERT hate speech classifier).
 Usage:
-    python -m src.train_guardian --config configs/default.yaml
+    python -m red_queen.train_guardian --config configs/default.yaml
 """
 
 import argparse
@@ -13,9 +13,9 @@ from sklearn.metrics import f1_score, classification_report
 from pathlib import Path
 from tqdm import tqdm
 
-from src.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
-from src.data_loading import load_and_split
-from src.models import Guardian
+from red_queen.utils import load_config, set_seed, get_device, create_run_dir, save_metrics, save_config_snapshot
+from red_queen.data_loading import load_and_split
+from red_queen.models import Guardian
 
 
 def train_one_epoch(guardian, dataloader, optimizer, scheduler, device):

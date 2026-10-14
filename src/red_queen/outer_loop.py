@@ -11,7 +11,7 @@ Round k:
 The first Guardian (round 0) must already be trained.
 
 Usage:
-    python3 -m src.outer_loop \
+    python -m red_queen.outer_loop \
         --config configs/default.yaml \
         --initial_guardian outputs/run_029/guardian_best \
         --num_rounds 5 \
@@ -32,12 +32,12 @@ from pathlib import Path
 from tqdm import tqdm
 from sklearn.metrics import f1_score, classification_report
 
-from src.utils import load_config, set_seed, get_device, save_metrics, save_config_snapshot
-from src.data_loading import load_and_split
-from src.models import Guardian, EvaderNetwork
-from src.evader_env import EvaderBanditEnv
-from src.evader_policy import train_evader
-from src.preprocess import (
+from red_queen.utils import load_config, set_seed, get_device, save_metrics, save_config_snapshot
+from red_queen.data_loading import load_and_split
+from red_queen.models import Guardian, EvaderNetwork
+from red_queen.evader_env import EvaderBanditEnv
+from red_queen.evader_policy import train_evader
+from red_queen.preprocess import (
     apply_perturbation, extract_text_features,
     ACTION_NAMES, NUM_ACTIONS,
 )

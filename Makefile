@@ -29,28 +29,28 @@ help:
 	@echo "  clean    — remove all outputs"
 
 install:
-	pip install -r requirements.txt
-	python3 -c "import nltk; nltk.download('wordnet', quiet=True); nltk.download('omw-1.4', quiet=True)"
+	uv sync --extra cpu
+	uv run python -c "import nltk; nltk.download('wordnet', quiet=True); nltk.download('omw-1.4', quiet=True)"
 
 train:
-	python3 -m src.train_guardian --config $(CONFIG)
+	python -m red_queen.train_guardian --config $(CONFIG)
 
 evader:
-	python3 -m src.evader_policy --config $(CONFIG) --guardian_path $(GUARDIAN_PATH)
+	python -m red_queen.evader_policy --config $(CONFIG) --guardian_path $(GUARDIAN_PATH)
 
 stress:
-	python3 -m src.generate_stress_cases --config $(CONFIG) \
+	python -m red_queen.generate_stress_cases --config $(CONFIG) \
 		--guardian_path $(GUARDIAN_PATH) \
 		--evader_path $(EVADER_PATH) \
 		--output_dir $(STRESS_DIR)
 
 robust:
-	python3 -m src.robust_train --config $(CONFIG) \
+	python -m red_queen.robust_train --config $(CONFIG) \
 		--guardian_path $(GUARDIAN_PATH) \
 		--stress_cases $(STRESS_FILE)
 
 eval:
-	python3 -m src.evaluate --config $(CONFIG) \
+	python -m red_queen.evaluate --config $(CONFIG) \
 		--baseline_path $(GUARDIAN_PATH) \
 		--robust_path $(ROBUST_PATH) \
 		--stress_cases $(STRESS_FILE) \

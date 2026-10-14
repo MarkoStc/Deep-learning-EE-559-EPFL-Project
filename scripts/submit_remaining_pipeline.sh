@@ -12,7 +12,7 @@ runai submit \
   --image registry.rcp.epfl.ch/ee559/environment-with-packages:latest \
   --gpu 1 \
   --existing-pvc claimname=home,path=/home/mstojano \
-  --command -- bash -lc 'export HOME=/home/mstojano; export TORCHINDUCTOR_CACHE_DIR=/home/mstojano/.torchinductor-cache; cd /home/mstojano/red_queen; pip install --break-system-packages -r requirements.txt 2>/dev/null; bash scripts/run_remaining_pipeline.sh'
+  --command -- bash -lc 'export HOME=/home/mstojano; export TORCHINDUCTOR_CACHE_DIR=/home/mstojano/.torchinductor-cache; cd /home/mstojano/red_queen; pip install --break-system-packages -e . 2>/dev/null; bash scripts/run_remaining_pipeline.sh'
 
 echo ""
 echo "Job submitted. Monitor with:"
