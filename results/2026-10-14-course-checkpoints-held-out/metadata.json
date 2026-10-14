@@ -1,0 +1,14 @@
+{
+  "created": "2026-10-14T12:25:54",
+  "git_commit": "ebe16780f3accc09c138cea32859b01f84ab13ef",
+  "python": "3.12.14",
+  "platform": "Windows-11-10.0.26100-SP0",
+  "packages": {
+    "torch": "2.14.1+cpu",
+    "transformers": "5.19.0",
+    "datasets": "5.1.0",
+    "scikit-learn": "1.9.1",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6"
+  }
+}

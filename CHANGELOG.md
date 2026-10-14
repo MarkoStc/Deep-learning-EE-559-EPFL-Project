@@ -25,6 +25,10 @@ All notable changes to this project are documented here. The format follows
 - Test suite (unit and end-to-end, CPU only, no network), GitHub Actions CI,
   dependency audit, Dependabot, multi-stage Docker image (CPU and CUDA 12.6).
 - Structured logging (text or JSON), retries with backoff for Hub downloads.
+- `red-queen compare`: score saved checkpoints under the held-out protocol.
+- `results/2026-10-14-course-checkpoints-held-out/`: the course checkpoints
+  re-scored this way (clean numbers reproduce the course report exactly).
+- README rewrite, model card, data card, ADRs, CONTRIBUTING, `CLAUDE.md`.
 
 ### Changed
 
@@ -57,6 +61,7 @@ All notable changes to this project are documented here. The format follows
   variables, see `.env.example`).
 - `requirements.txt`, the legacy modules and the shell wrappers that hardcoded
   run directories.
+- Empty `outputs/run_001` to `run_028` from failed cluster attempts.
 
 ## [0.1.0] - 2026-04-11
 

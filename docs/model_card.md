@@ -23,11 +23,17 @@ the EPFL RCP cluster, code at tag `v0-original`):
 | Baseline | 0.8098 | 0.6486 | 0.6820 | 0.6183 |
 | Robust | 0.8041 | 0.6373 | 0.6907 | 0.5917 |
 
-Stress-set numbers from that run are not repeated here: the robust model was
-evaluated on stress cases it had partly been trained on
-([ADR 0003](adr/0003-held-out-stress-evaluation.md)). The current pipeline
-evaluates on a held-out stress set; it has not yet been rerun on Civil Comments
-(see the README).
+The course run's stress numbers came from a leaky protocol
+([ADR 0003](adr/0003-held-out-stress-evaluation.md)). Re-scored on a held-out
+set (hateful test comments with leetspeak, `red-queen compare`, see the README
+for the command and `results/2026-10-14-course-checkpoints-held-out/`):
+
+| Model | Hate recall under leetspeak | Conditional ASR, homoglyph | Conditional ASR, typo |
+|---|---|---|---|
+| Baseline | 0.0367 | 0.731 | 0.350 |
+| Robust | 0.9967 | 0.448 | 0.335 |
+
+Retraining fixed the action it was trained on and left the others mostly open.
 
 ### Limits
 

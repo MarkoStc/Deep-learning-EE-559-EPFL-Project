@@ -31,6 +31,11 @@ before any perturbation.
 ## Consequences
 
 - New results are not comparable one-to-one with the course report's stress
-  numbers. The README shows the course numbers with this caveat.
+  numbers.
+- Re-scoring the course checkpoints this way (`red-queen compare`, 2026-10-14)
+  gave a held-out leetspeak recall of 0.9967 for the robust model, close to the
+  leaky 0.9964: for that action the leak did not change the conclusion. The
+  brute-force baseline showed what the old protocol hid: homoglyphs and typos
+  still evade the robust model.
 - Robustness to an Evader retrained against the robust model (an adaptive
   attack) is measured by `red-queen arms-race`, not by `evaluate`.

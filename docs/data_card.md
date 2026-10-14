@@ -10,7 +10,7 @@
 | Columns kept | `text`, `toxicity`, `label`, and the identity columns used for subgroup metrics |
 | Size used | Stratified subsample of 50,000 rows (`dataset.max_samples`), then a stratified 70 / 15 / 15 split with seed 42 |
 | Cache | `data/civil_comments_t0.5.parquet` (git-ignored) |
-| Licence | See the dataset card on the Hugging Face Hub |
+| Licence | CC0-1.0, per the Hub dataset card |
 
 In the original run the subsample had about 8% positives
 (`outputs/evaluation/all_metrics.json`: 600 of 7,500 test comments are labelled
@@ -28,7 +28,7 @@ reported.
 | Source | Hugging Face `Hate-speech-CNERG/hatexplain`, read from the Hub parquet conversion (`refs/convert/parquet`) |
 | Label used here | Majority vote over annotators; *offensive* and *hate speech* both map to 1, *normal* to 0 |
 | Status | The loader is unit-tested with faked Hub data only. It has not been run against the live dataset in this repository. |
-| Licence | See the dataset card on the Hugging Face Hub |
+| Licence | CC-BY-4.0, per the Hub dataset card (attribution required) |
 
 ## Synthetic (tests and smoke runs only)
 
