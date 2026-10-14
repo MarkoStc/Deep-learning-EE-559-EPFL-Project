@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-14
+
 ### Added
 
 - `red-queen` CLI: `pipeline`, `train`, `evader`, `stress`, `robust`,
@@ -67,3 +69,7 @@ All notable changes to this project are documented here. The format follows
 ## [0.1.0] - 2026-04-11
 
 Original EE-559 course project code, as tagged `v0-original`.
+
+[Unreleased]: https://github.com/MarkoStc/Deep-learning-EE-559-EPFL-Project/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/MarkoStc/Deep-learning-EE-559-EPFL-Project/compare/v0-original...v1.0.0
+[0.1.0]: https://github.com/MarkoStc/Deep-learning-EE-559-EPFL-Project/tree/v0-original
