@@ -59,12 +59,3 @@ eval:
   sanitize_logs: true                # mask hateful words in printed examples
   max_display_examples: 10
   mask_char: "█"
-
-# --- Cluster (EPFL RCP) ---
-cluster:
-  uid: 309057
-  image: "registry.rcp.epfl.ch/ee559/environment-with-packages:latest"
-  gpu: 1
-  pvc_claim: "home"
-  pvc_path: "/home/mstojano"
-  project_path: "/home/mstojano/red_queen"
