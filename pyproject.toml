@@ -27,6 +27,8 @@ dependencies = [
 # Pick exactly one torch build: `uv sync --extra cpu` or `uv sync --extra cu126`.
 cpu = ["torch>=2.6"]
 cu126 = ["torch>=2.6"]
+tensorboard = ["tensorboard>=2.17"]
+wandb = ["wandb>=0.18"]
 
 [dependency-groups]
 dev = [
@@ -118,7 +120,7 @@ exclude = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["datasets.*", "sklearn.*", "seaborn.*", "nltk.*", "emoji.*", "transformers.*", "tokenizers.*", "pyarrow.*", "tensorboard.*", "torch.utils.tensorboard.*"]
+module = ["datasets.*", "sklearn.*", "seaborn.*", "nltk.*", "emoji.*", "transformers.*", "tokenizers.*", "pyarrow.*", "tensorboard.*", "torch.utils.tensorboard.*", "wandb.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
