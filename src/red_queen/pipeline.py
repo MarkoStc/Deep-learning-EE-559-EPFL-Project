@@ -33,10 +33,16 @@ from red_queen.evader import (
 from red_queen.evaluation import Evaluator, ModelReport, write_report
 from red_queen.guardian import Guardian
 from red_queen.logging_setup import fields
+from red_queen.metrics import AttackMetrics
 from red_queen.perturbations import PerturbationSet, SynonymLookup
 from red_queen.runs import Artifact, RunDirectory
 from red_queen.runtime import make_rng
-from red_queen.stress import StressCaseGenerator, load_stress_cases, save_stress_cases
+from red_queen.stress import (
+    BruteForceBaseline,
+    StressCaseGenerator,
+    load_stress_cases,
+    save_stress_cases,
+)
 from red_queen.tracking import NullTracker, Tracker
 from red_queen.training import FitResult, GuardianTrainer, LabelledTexts, augment_with_stress
 
@@ -52,12 +58,12 @@ class Step(StrEnum):
 
 
 ALL_STEPS = tuple(Step)
-_STEP_ARTIFACT = {
-    Step.GUARDIAN: Artifact.GUARDIAN,
-    Step.EVADER: Artifact.EVADER,
-    Step.STRESS: Artifact.STRESS_TRAIN,
-    Step.ROBUST: Artifact.ROBUST,
-    Step.EVALUATE: Artifact.EVALUATION,
+_STEP_ARTIFACTS = {
+    Step.GUARDIAN: (Artifact.GUARDIAN,),
+    Step.EVADER: (Artifact.EVADER,),
+    Step.STRESS: (Artifact.STRESS_TRAIN, Artifact.STRESS_EVAL),
+    Step.ROBUST: (Artifact.ROBUST,),
+    Step.EVALUATE: (Artifact.EVALUATION,),
 }
 
 
@@ -113,7 +119,7 @@ class Pipeline:
         for step in ALL_STEPS:
             if step not in steps:
                 continue
-            if not force and self.run_dir.manifest.has(_STEP_ARTIFACT[step]):
+            if not force and all(self.run_dir.manifest.has(a) for a in _STEP_ARTIFACTS[step]):
                 log.info("step already done, skipping", extra=fields(step=step.value))
                 continue
             log.info("running step", extra=fields(step=step.value))
@@ -227,19 +233,35 @@ class Pipeline:
         return out
 
     def generate_stress(self) -> Path:
-        """Stress cases from the hateful *training* texts (input for robust retraining)."""
+        """Two stress sets from the baseline Guardian and the trained Evader.
+
+        * ``stress/train``: hateful *training* texts. Robust retraining learns
+          from these.
+        * ``stress/eval``: hateful *test* texts, with a separate RNG stream.
+          Neither model ever trains on them, so this is the set evaluation
+          reports. The course project scored the robust model on the training
+          stress set, half of which it had been retrained on.
+        """
         guardian = self.load_guardian(Artifact.GUARDIAN)
-        generator = self.stress_generator(guardian, "stress-train")
-        df = generator.with_policy(
-            self.splits.hateful_texts("train"), self.load_policy(), self.device
-        )
-        path = save_stress_cases(df, self.run_dir.subdir("stress", "train"), self.mask_char())
-        self.run_dir.manifest.record(Artifact.STRESS_TRAIN, path)
-        log.info(
-            "stress cases generated",
-            extra=fields(n=len(df), asr=float(df["attack_success"].mean())),
-        )
-        return path
+        policy = self.load_policy()
+        paths = {}
+        for artifact, split, stream in (
+            (Artifact.STRESS_TRAIN, "train", "stress-train"),
+            (Artifact.STRESS_EVAL, "test", "stress-eval"),
+        ):
+            df = self.stress_generator(guardian, stream).with_policy(
+                self.splits.hateful_texts(split), policy, self.device
+            )
+            subdir = "train" if split == "train" else "eval"
+            paths[artifact] = save_stress_cases(
+                df, self.run_dir.subdir("stress", subdir), self.mask_char()
+            )
+            self.run_dir.manifest.record(artifact, paths[artifact])
+            log.info(
+                "stress cases generated",
+                extra=fields(split=split, n=len(df), asr=float(df["attack_success"].mean())),
+            )
+        return paths[Artifact.STRESS_EVAL]
 
     def robust_retrain(self) -> Path:
         out = self.run_dir.subdir("robust")
@@ -255,23 +277,54 @@ class Pipeline:
         self.run_dir.manifest.record(Artifact.ROBUST, out / "best")
         return out / "best"
 
-    def evaluation_stress_set(self) -> pd.DataFrame:
-        """The stress set both models are scored on."""
-        return load_stress_cases(self.run_dir.manifest.get(Artifact.STRESS_TRAIN))
-
     def evaluate(self) -> Path:
+        """Score every Guardian on the clean test set and the held-out stress set.
+
+        Also records, for transparency, the in-sample number the course
+        project reported (robust model on the training stress set) and a
+        brute-force baseline on the same test texts, so the learned policy can
+        be compared with simply trying every action.
+        """
         out = self.run_dir.subdir("evaluation")
-        stress = self.evaluation_stress_set()
+        held_out = load_stress_cases(self.run_dir.manifest.get(Artifact.STRESS_EVAL))
+        train_stress = load_stress_cases(self.run_dir.manifest.get(Artifact.STRESS_TRAIN))
         evaluator = Evaluator(self.cfg.evaluation)
-        reports: dict[str, ModelReport] = {
-            "baseline": evaluator.evaluate(
-                self.load_guardian(Artifact.GUARDIAN), self.splits.test, stress
-            )
-        }
+        models = {"baseline": self.load_guardian(Artifact.GUARDIAN)}
         if self.run_dir.manifest.has(Artifact.ROBUST):
-            reports["robust"] = evaluator.evaluate(
-                self.load_guardian(Artifact.ROBUST), self.splits.test, stress
-            )
-        write_report(reports, out, extra={"config_seed": self.cfg.seed})
+            models["robust"] = self.load_guardian(Artifact.ROBUST)
+        reports: dict[str, ModelReport] = {
+            name: evaluator.evaluate(model, self.splits.test, held_out)
+            for name, model in models.items()
+        }
+        in_sample = {
+            name: AttackMetrics.from_frame(
+                train_stress.assign(
+                    pred_original=model.predict(train_stress["original_text"].tolist()),
+                    pred_perturbed=model.predict(train_stress["perturbed_text"].tolist()),
+                )
+            ).to_dict()
+            for name, model in models.items()
+        }
+        brute = BruteForceBaseline(self.stress_generator(models["baseline"], "eval-brute-force"))
+        brute_result = brute.run(self.splits.hateful_texts("test"))
+        policy_asr = AttackMetrics.from_frame(held_out).asr
+        write_report(
+            reports,
+            out,
+            extra={
+                "protocol": (
+                    "Stress metrics use stress/eval: hateful test texts perturbed by the Evader "
+                    "trained against the baseline. No model trained on these texts."
+                ),
+                "policy_vs_brute_force": {
+                    "evader_policy_asr": policy_asr,
+                    "best_single_action_asr": max(m.asr for m in brute_result.per_action.values()),
+                    "best_of_all_actions_asr": brute_result.best_of_all_asr,
+                    "per_action": brute_result.to_dict()["per_action"],
+                },
+                "in_sample_train_stress_do_not_report": in_sample,
+                "seed": self.cfg.seed,
+            },
+        )
         self.run_dir.manifest.record(Artifact.EVALUATION, out)
         return out
