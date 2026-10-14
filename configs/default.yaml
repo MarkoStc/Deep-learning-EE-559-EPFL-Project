@@ -34,6 +34,7 @@ guardian:                    # DistilBERT classifier under attack
   epochs: 3
   warmup_ratio: 0.1
   grad_clip_norm: 1.0
+  keep_resume_state: false  # per-epoch resume state is deleted once training finishes
 
 robust:                      # retraining on train data + stress cases
   augmentation_ratio: 0.5    # share of stress cases mixed into the train set

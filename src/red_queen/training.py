@@ -22,12 +22,15 @@ from tqdm import tqdm
 from transformers import get_linear_schedule_with_warmup
 
 from red_queen.config import AppConfig, TrainSchedule
+from red_queen.errors import ArtifactError
 from red_queen.guardian import Guardian
 from red_queen.logging_setup import fields
 from red_queen.metrics import ClassificationMetrics
 from red_queen.tracking import NullTracker, Tracker
 
 log = logging.getLogger(__name__)
+
+RESUME_FILE = "trainer_state.pt"
 
 
 @dataclass(frozen=True)
@@ -101,8 +104,14 @@ class GuardianTrainer:
         val: LabelledTexts,
         best_dir: Path,
         cfg: AppConfig | None = None,
+        resume_dir: Path | None = None,
     ) -> FitResult:
-        """Train for ``schedule.epochs`` and save the best epoch to ``best_dir``."""
+        """Train for ``schedule.epochs`` and save the best epoch to ``best_dir``.
+
+        With ``resume_dir``, the full training state is saved there after
+        every epoch, and a later call with the same directory continues from
+        the next epoch instead of starting over.
+        """
         if not len(train) or not len(val):
             raise ValueError("training and validation sets must not be empty")
         sched = self.schedule
@@ -118,7 +127,12 @@ class GuardianTrainer:
         )
         best: EpochResult | None = None
         history: list[EpochResult] = []
-        for epoch in range(1, sched.epochs + 1):
+        start = 1
+        if resume_dir is not None and (resume_dir / RESUME_FILE).exists():
+            history, best = self._load_state(resume_dir, optimizer, scheduler)
+            start = len(history) + 1
+            log.info("resuming training", extra=fields(stage=self.stage, next_epoch=start))
+        for epoch in range(start, sched.epochs + 1):
             train_loss = self._train_epoch(train, epoch, optimizer, scheduler)
             val_loss, metrics = self.evaluate(val)
             result = EpochResult(epoch, train_loss, val_loss, metrics.macro_f1, metrics.weighted_f1)
@@ -130,8 +144,53 @@ class GuardianTrainer:
             if best is None or result.val_macro_f1 > best.val_macro_f1:
                 best = result
                 self.guardian.save(best_dir, cfg)
-        assert best is not None
+            if resume_dir is not None:
+                self._save_state(resume_dir, optimizer, scheduler, history, best)
+        if best is None:
+            raise ArtifactError(f"{resume_dir} records no finished epoch")
         return FitResult(best.epoch, best.val_macro_f1, history)
+
+    def _save_state(
+        self,
+        resume_dir: Path,
+        optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler.LRScheduler,
+        history: list[EpochResult],
+        best: EpochResult,
+    ) -> None:
+        resume_dir.mkdir(parents=True, exist_ok=True)
+        state = {
+            "model": self.guardian.model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "scheduler": scheduler.state_dict(),
+            "history": [asdict(h) for h in history],
+            "best": asdict(best),
+            "torch_rng": torch.get_rng_state(),
+            "cuda_rng": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else [],
+        }
+        tmp = resume_dir / f"{RESUME_FILE}.tmp"
+        torch.save(state, tmp)
+        tmp.replace(resume_dir / RESUME_FILE)  # atomic: a crash mid-save keeps the old state
+
+    def _load_state(
+        self,
+        resume_dir: Path,
+        optimizer: torch.optim.Optimizer,
+        scheduler: torch.optim.lr_scheduler.LRScheduler,
+    ) -> tuple[list[EpochResult], EpochResult]:
+        state = torch.load(
+            resume_dir / RESUME_FILE, map_location=self.guardian.device, weights_only=False
+        )
+        history = [EpochResult(**h) for h in state["history"]]
+        if len(history) >= self.schedule.epochs + 1:
+            raise ArtifactError(f"{resume_dir} has more epochs than the schedule allows")
+        self.guardian.model.load_state_dict(state["model"])
+        optimizer.load_state_dict(state["optimizer"])
+        scheduler.load_state_dict(state["scheduler"])
+        torch.set_rng_state(state["torch_rng"])
+        if state["cuda_rng"] and torch.cuda.is_available():
+            torch.cuda.set_rng_state_all(state["cuda_rng"])
+        return history, EpochResult(**state["best"])
 
     def _loader(self, data: LabelledTexts, shuffle: bool, epoch: int = 0) -> DataLoader[int]:
         # A fresh generator per epoch makes the batch order depend only on (seed, epoch).
