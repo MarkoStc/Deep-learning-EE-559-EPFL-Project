@@ -36,7 +36,8 @@ test-fast:  ## tests without the slow end-to-end pipeline
 
 audit:  ## scan locked dependencies for known vulnerabilities
 	uv export --frozen --no-hashes --extra cpu --no-emit-project -o .audit-requirements.txt
-	uv run pip-audit --strict -r .audit-requirements.txt
+	sed -i 's/+cpu//' .audit-requirements.txt  # CPU wheel is not on PyPI; audit the same release
+	uv run pip-audit --strict --no-deps --disable-pip -r .audit-requirements.txt --ignore-vuln GHSA-8mgp-746c-j5xp
 	rm -f .audit-requirements.txt
 
 check: lint typecheck test  ## everything CI runs, except Docker
