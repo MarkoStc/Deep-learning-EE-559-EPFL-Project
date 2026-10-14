@@ -1,0 +1,3 @@
+model,clean_macro_f1,clean_hate_f1,clean_hate_precision,clean_hate_recall,clean_accuracy,stress_n,stress_hate_recall,stress_asr,stress_conditional_asr
+baseline,0.8098,0.6486,0.6820,0.6183,0.9464,600,0.0367,0.9633,0.9407
+robust,0.8041,0.6373,0.6907,0.5917,0.9461,600,0.9967,0.0033,0.0000

@@ -1,0 +1,79 @@
+seed: 42
+deterministic: true
+device: auto
+paths:
+  data_dir: data
+  runs_dir: runs
+hub:
+  download_attempts: 4
+  backoff_base_s: 2.0
+  backoff_max_s: 60.0
+  timeout_s: 60
+dataset:
+  name: civil_comments
+  max_samples: 50000
+  test_size: 0.15
+  val_size: 0.15
+  toxicity_threshold: 0.5
+  synthetic_size: 600
+guardian:
+  model_name: distilbert-base-uncased
+  tiny: null
+  max_length: 128
+  batch_size: 32
+  eval_batch_size: 128
+  learning_rate: 2.0e-05
+  weight_decay: 0.01
+  epochs: 3
+  warmup_ratio: 0.1
+  grad_clip_norm: 1.0
+  keep_resume_state: false
+robust:
+  augmentation_ratio: 0.5
+  epochs: 2
+  learning_rate: 1.0e-05
+  warmup_ratio: 0.0
+evader:
+  hidden_dim: 64
+  learning_rate: 0.001
+  episodes: 2000
+  batch_size: 64
+  min_batch_size: 16
+  entropy_coeff: 0.01
+  baseline_decay: 0.99
+  grad_clip_norm: 1.0
+  log_every: 50
+perturbation:
+  typo_prob: 0.3
+  leet_prob: 0.4
+  whitespace_prob: 0.3
+  homoglyph_prob: 0.3
+  synonym_max_replacements: 2
+  synonym_max_synsets: 3
+  emoji_insert_count: 1
+stress:
+  batch_size: 64
+evaluation:
+  sanitize_logs: true
+  mask_char: █
+  max_display_examples: 10
+  identity_threshold: 0.5
+  min_subgroup_size: 10
+  identity_columns:
+  - male
+  - female
+  - black
+  - white
+  - asian
+  - latino
+  - homosexual_gay_or_lesbian
+  - muslim
+  - christian
+  - jewish
+outer_loop:
+  num_rounds: 5
+tracking:
+  csv: true
+  tensorboard: false
+  wandb: false
+  wandb_project: red-queen
